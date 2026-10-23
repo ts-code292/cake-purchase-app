@@ -62,7 +62,29 @@ $('addItem').onclick=()=>{const qty=Number($('qty').value),name=$('name').value.
 $('receipts').onchange=()=>{receiptFiles=Array.from($('receipts').files||[]);$('receiptPreview').innerHTML='';receiptFiles.forEach(f=>{const img=document.createElement('img');img.alt='ตัวอย่างใบเสร็จ';img.src=URL.createObjectURL(f);$('receiptPreview').appendChild(img)})};
 function payload(){return{schemaVersion:1,sessionId,shop:$('shop').value.trim(),purchasedAt:$('date').value,note:$('note').value.trim(),items,receiptCount:receiptFiles.length,workflowStatus:'pending_review',createdAt:new Date().toISOString()}}
 function fileAsData(f){return new Promise(resolve=>{const r=new FileReader();r.onload=()=>resolve({name:f.name,type:f.type,dataUrl:r.result});r.readAsDataURL(f)})}
-$('saveDraft').onclick=async()=>{localStorage.setItem('cakePurchaseDraft',JSON.stringify({...payload(),receipts:await Promise.all(receiptFiles.map(fileAsData))}));$('status').textContent='เก็บฉบับร่างไว้ในเบราว์เซอร์เครื่องนี้แล้ว'};
+$('saveDraft').onclick=async()=>{try{localStorage.setItem('cakePurchaseDraft',JSON.stringify({...payload(),receipts:await Promise.all(receiptFiles.map(fileAsData))}));$('status').textContent='เก็บฉบับร่างไว้แล้ว · รีเฟรชหน้าเว็บได้'}catch(e){$('status').textContent='บันทึกฉบับร่างไม่สำเร็จ อาจมีรูปใบเสร็จขนาดใหญ่เกินพื้นที่เก็บของ Safari · ส่งออกชุดข้อมูลแทน';alert('บันทึกฉบับร่างไม่สำเร็จ (พื้นที่เก็บในเบราว์เซอร์อาจเต็ม) กรุณากดส่งออกชุดข้อมูลเพื่อสำรอง')}}; 
+async function restoreDraft(){
+  let draft;
+  try{draft=JSON.parse(localStorage.getItem('cakePurchaseDraft')||'null')}catch(e){}
+  if(!draft)return;
+  sessionId=draft.sessionId||sessionId;
+  $('shop').value=draft.shop||'';
+  $('date').value=draft.purchasedAt||$('date').value;
+  $('note').value=draft.note||'';
+  items=Array.isArray(draft.items)?draft.items:[];
+  render();
+  if(Array.isArray(draft.receipts)&&draft.receipts.length){
+    receiptFiles=await Promise.all(draft.receipts.map(async(r,i)=>{
+      const blob=await (await fetch(r.dataUrl)).blob();
+      return new File([blob],r.name||`receipt-${i+1}.jpg`,{type:r.type||blob.type});
+    }));
+    $('receiptPreview').innerHTML='';
+    receiptFiles.forEach(f=>{const img=document.createElement('img');img.alt='ตัวอย่างใบเสเสร็จ';img.src=URL.createObjectURL(f);$('receiptPreview').appendChild(img)});
+  }
+  $('status').textContent='กู้คืนฉบับร่างจากเครื่องนี้แล้ว · ตรวจข้อมูลก่อนทำต่อ';
+}
+window.addEventListener('DOMContentLoaded',()=>{restoreDraft().catch(()=>{$('status').textContent='พบฉบับร่างแต่กู้คืนไม่ครบ · ตรวจพื้นที่เก็บของ Safari'})});
+
 $('export').onclick=async()=>{if(!items.length){alert('เพิ่มรายการซื้ออย่างน้อย 1 รายการก่อนส่งออก');return}const data={...payload(),receipts:await Promise.all(receiptFiles.map(fileAsData))};const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const filename=sessionId+'.json';try{const file=new File([blob],filename,{type:'application/json'});if(navigator.canShare&&navigator.canShare({files:[file]})&&navigator.share){await navigator.share({files:[file],title:'ชุดข้อมูลรอบซื้อ'});$('status').textContent='เปิดเมนูแชร์แล้ว · เลือก Drive หรือบันทึกลง Files เพื่อส่งให้กรุงเทพฯ';return}}catch(err){if(err&&err.name==='AbortError'){$('status').textContent='ยกเลิกการแชร์';return}}const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(url),1500);$('status').textContent='ดาวน์โหลดไฟล์รอบซื้อแล้ว · เปิดเมนูแชร์ของ iPhone หรือแอป Files แล้วอัปโหลดไปยังโฟลเดอร์ Google Drive ของร้าน'};
 let scanControls=null, scanning=false;
 $('scanBtn').onclick=async()=>{

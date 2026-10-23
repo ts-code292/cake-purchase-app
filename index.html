@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#f2f2f7"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="บันทึกรอบซื้อ"><link rel="manifest" href="./manifest.webmanifest"><link rel="apple-touch-icon" href="./icons/icon-192.png"><title>Cake Stock · บันทึกซื้อ</title>
+<html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#f2f2f7"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self' https://cake-products-api.techinsaihaikham.workers.dev; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="บันทึกรอบซื้อ"><link rel="manifest" href="./manifest.webmanifest"><link rel="apple-touch-icon" href="./icons/icon-192.png"><title>Cake Stock · บันทึกซื้อ</title>
 <style>
 :root{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display","Helvetica Neue",system-ui,sans-serif;color:#1c1c1e;background:#f2f2f7;--blue:#007aff;--line:#e5e5ea;--muted:#8e8e93}
 *{box-sizing:border-box}
@@ -78,7 +78,7 @@ footer{font-size:.76rem;color:#8e8e93;text-align:center;padding:4px 18px 24px}
   </section>
 </div>
 <div id="appShell" hidden>
-<header><div class="app-header"><div><h1>บันทึกรอบซื้อ</h1><p>Cake Stock <span aria-hidden="true">·</span> เชียงใหม่ <span class="pill" aria-label="เวอร์ชัน 1.0.0">V.1.0.0</span></p></div><button id="logoutApp" class="secondary" type="button">ออกจากระบบ</button></div></header>
+<header><div class="app-header"><div><h1>บันทึกรอบซื้อ</h1><p>Cake Stock <span aria-hidden="true">·</span> เชียงใหม่ <span class="pill" aria-label="เวอร์ชัน 1.0.2">V.1.0.2</span></p></div><button id="logoutApp" class="secondary" type="button">ออกจากระบบ</button></div></header>
 <div class="privacy-note" role="note">
   <strong>Product DB ใช้ร่วมกันได้ · ข้อมูลสินค้าอ่านได้สาธารณะ</strong>
   <p>ฐานข้อมูลสินค้า (barcode, ชื่อ, แบรนด์, ขนาดแพ็ก, หน่วย และหมวดหมู่) เก็บในไฟล์สาธารณะบน GitHub เพื่อให้ทุกเครื่องอ่านร่วมกันได้ ห้ามใส่ราคา ต้นทุน สต็อก หรือข้อมูลส่วนบุคคล</p>
@@ -153,20 +153,13 @@ footer{font-size:.76rem;color:#8e8e93;text-align:center;padding:4px 18px 24px}
 </main>
 <footer>ต้นแบบ MVP · สต็อกจะยังไม่เพิ่มจนกว่ากรุงเทพฯ จะตรวจและยืนยัน</footer>
 </div>
-<script>
-function retryZxingCdn(script){
-  script.onerror=null;
-  script.src='https://cdn.jsdelivr.net/npm/@zxing/browser@0.1.5/umd/zxing-browser.min.js';
-  script.onerror=()=>{script.dataset.failed='true'};
-}
-</script>
-<script id="zxingLibrary" src="https://unpkg.com/@zxing/browser@0.1.5/umd/zxing-browser.min.js" onerror="retryZxingCdn(this)"></script>
+<script id="zxingLibrary" src="./vendor/zxing-browser.min.js"></script>
 <script>
 const $=id=>document.getElementById(id);let items=[],receiptFiles=[],stream=null,detector=null;
 const now=new Date();now.setMinutes(now.getMinutes()-now.getTimezoneOffset());$('date').value=now.toISOString().slice(0,16);
 function newId(){return 'CM-'+new Date().toISOString().replace(/[-:TZ.]/g,'').slice(0,14)+'-'+Math.random().toString(36).slice(2,6).toUpperCase()}let sessionId=newId();$('sessionId').textContent=sessionId;
 function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-function render(){$('count').textContent=items.length+' รายการ';$('items').innerHTML=items.length?items.map((x,i)=>`<div class="item"><div><strong>${esc(x.name||'สินค้ายังไม่ทราบชื่อ')}</strong><div class="meta">บาร์โค้ด: ${esc(x.barcode||'—')} · ${esc(x.category)}</div><div class="meta">แพ็กละ ${esc(x.packSize)} ${esc(x.unit)} × ${x.qty} แพ็ก</div></div><button class="danger" data-del="${i}">ลบ</button></div>`).join(''):'<p class="small">ยังไม่มีรายการ เพิ่มสินค้าจากส่วนด้านบน</p>';$('items').querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{items.splice(+b.dataset.del,1);render()})}
+function render(){$('count').textContent=items.length+' รายการ';$('items').innerHTML=items.length?items.map((x,i)=>`<div class="item"><div><strong>${esc(x.name||'สินค้ายังไม่ทราบชื่อ')}</strong><div class="meta">บาร์โค้ด: ${esc(x.barcode||'—')} · ${esc(x.category)}</div><div class="meta">แพ็กละ ${esc(x.packSize)} ${esc(x.unit)} × ${esc(x.qty)} แพ็ก</div></div><button class="danger" data-del="${i}">ลบ</button></div>`).join(''):'<p class="small">ยังไม่มีรายการ เพิ่มสินค้าจากส่วนด้านบน</p>';$('items').querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{items.splice(+b.dataset.del,1);render()})}
 $('addItem').onclick=()=>{const qty=Number($('qty').value),name=$('name').value.trim();if(!qty||qty<=0){alert('กรอกจำนวนแพ็กให้มากกว่า 0');return}if(!name){alert('กรอกชื่อสินค้าหรือสแกน barcode');return}items.push({barcode:$('purchaseBarcode').value.trim(),name,packSize:$('packSize').value.trim(),unit:$('unit').value.trim(),qty,category:$('category').value});['purchaseBarcode','name','packSize','unit','qty'].forEach(id=>$(id).value='');$('selectedProductSummary').textContent='สแกนบาร์โค้ดในหน้านี้เพื่อเติมข้อมูลสินค้าอัตโนมัติ หรือกรอกชื่อเอง';$('addUnknownPurchaseProduct').hidden=true;render()};
 $('purchaseBarcode').addEventListener('change',()=>lookupPurchaseBarcode($('purchaseBarcode').value));
 $('purchaseBarcode').addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();lookupPurchaseBarcode($('purchaseBarcode').value)}});
@@ -213,35 +206,10 @@ function normalizeProduct(value){
   if(!category) throw new Error('ต้องมีหมวดหมู่');
   return {barcode,name,brand,packSize,unit,category};
 }
-function parseProductImport(input){
-  let payload;
-  try{payload=typeof input==='string'?JSON.parse(input):input}catch(e){throw new Error('ไฟล์ไม่ใช่ JSON ที่อ่านได้: '+e.message)}
-  const rows=Array.isArray(payload)?payload:(payload&&Array.isArray(payload.products)?payload.products:null);
-  if(!rows) throw new Error('รูปแบบไฟล์ไม่ถูกต้อง: ต้องเป็น array หรือ object ที่มี products เป็น array');
-  if(!rows.length) throw new Error('ไม่พบสินค้าในไฟล์');
-  const byBarcode=new Map(),duplicateBarcodes=[];
-  rows.forEach((row,index)=>{
-    let product;
-    try{product=normalizeProduct(row)}catch(e){throw new Error('รายการที่ '+(index+1)+' ไม่ถูกต้อง: '+e.message)}
-    if(byBarcode.has(product.barcode)) duplicateBarcodes.push(product.barcode);
-    byBarcode.set(product.barcode,product);
-  });
-  return {products:[...byBarcode.values()],duplicateBarcodes:[...new Set(duplicateBarcodes)]};
-}
-function mergeProductData(current,incoming,mode){
-  if(mode==='replace') return {products:[...incoming],conflicts:[]};
-  if(mode!=='merge') throw new Error('โหมดนำเข้าไม่ถูกต้อง');
-  const byBarcode=new Map(current.map(p=>[p.barcode,p])),conflicts=[];
-  incoming.forEach(p=>{if(byBarcode.has(p.barcode))conflicts.push(p.barcode);byBarcode.set(p.barcode,p)});
-  return {products:[...byBarcode.values()],conflicts:[...new Set(conflicts)]};
-}
 function searchProductData(source,query){
   const term=String(query||'').trim().toLocaleLowerCase();
   if(!term)return [...source];
   return source.filter(p=>[p.barcode,p.name,p.brand,p.packSize,p.unit,p.category].some(v=>String(v||'').toLocaleLowerCase().includes(term)));
-}
-function exportProductData(source){
-  return JSON.stringify({schemaVersion:1,exportedAt:new Date().toISOString(),products:source.map(normalizeProduct)},null,2);
 }
 function readProductData(storage=localStorage){
   const raw=storage.getItem(PRODUCT_STORAGE_KEY);
@@ -266,12 +234,12 @@ function commitProductData(next,message){
   try{products=persistProductData(next);renderProductDatabase();$('productDbStatus').textContent=message}
   catch(e){$('productDbStatus').textContent='บันทึก Product DB ไม่สำเร็จ: '+e.message;throw e}
 }
-const PRODUCT_API_URL_KEY='cakeProductDbApiUrl',PRODUCT_PENDING_KEY='cakeProductDatabasePendingCloudV1';
-const DEFAULT_PRODUCT_API_URL='https://cake-products-api.techinsaihaikham.workers.dev';
-let productApiUrl=localStorage.getItem('cakeProductDbApiUrl')||DEFAULT_PRODUCT_API_URL,productTeamCode=sessionStorage.getItem('cakeProductDbTeamCode')||'',sharedProductDbConnected=false,teamWriteVerified=false;
+const PRODUCT_PENDING_KEY='cakeProductDatabasePendingCloudV1';
+const PRODUCT_API_URL='https://cake-products-api.techinsaihaikham.workers.dev';
+let productTeamCode=sessionStorage.getItem('cakeProductDbTeamCode')||'',sharedProductDbConnected=false,teamWriteVerified=false;
 function pendingCloudProducts(){try{return JSON.parse(localStorage.getItem(PRODUCT_PENDING_KEY)||'[]')}catch(e){return []}}
 function updatePendingCloudButton(){const n=pendingCloudProducts().length;$('uploadPendingLocalProducts').hidden=!n;$('uploadPendingLocalProducts').textContent='ส่งสินค้าในเครื่องขึ้นฐานกลาง ('+n+' รายการ)'}
-function cloudEndpoint(){if(!productApiUrl)throw new Error('กรุณากรอก Worker URL');const u=new URL(productApiUrl);if(u.protocol!=='https:')throw new Error('Worker URL ต้องเป็น HTTPS');return u.toString().replace(/\/$/,'')+'/products'}
+function cloudEndpoint(){return PRODUCT_API_URL+'/products'}
 async function callProductApi(payload,write,teamCode=productTeamCode){
   const headers={Accept:'application/json'};if(payload){headers['Content-Type']='application/json';if(write){if(!teamCode)throw new Error('กรุณาใส่รหัสทีมก่อน');headers.Authorization='Bearer '+teamCode}}
   let response;try{response=await fetch(cloudEndpoint(),{method:payload?'POST':'GET',headers,body:payload?JSON.stringify(payload):undefined,cache:'no-store'})}catch(e){throw new Error('ติดต่อฐานข้อมูลไม่ได้ ตรวจ URL, อินเทอร์เน็ต และ CORS ของ Worker')}
@@ -286,7 +254,7 @@ function productApiErrorMessage(error){
   return message;
 }
 async function connectSharedProductDb(){
-  productApiUrl=localStorage.getItem(PRODUCT_API_URL_KEY)||DEFAULT_PRODUCT_API_URL;
+
   $('productCloudStatus').textContent='กำลังโหลดรายการสินค้า…';
   try{
     const remote=normalizeRemoteProducts((await callProductApi()).products),remoteCodes=new Set(remote.map(p=>p.barcode));
@@ -375,7 +343,7 @@ function initializeProductDatabase(){
   try{products=readProductData();$('productDbStatus').textContent=products.length?'กู้คืนรายการสินค้าในเครื่องแล้ว':'ยังไม่มีสินค้าในเครื่อง'}
   catch(e){products=[];$('productDbStatus').textContent='อ่านข้อมูลในเครื่องไม่ได้: '+e.message}
   productTeamCode=sessionStorage.getItem('cakeProductDbTeamCode')||'';
-  productApiUrl=localStorage.getItem(PRODUCT_API_URL_KEY)||DEFAULT_PRODUCT_API_URL;
+
   renderProductDatabase();updatePendingCloudButton();connectSharedProductDb();
 }
 $('productSearch').addEventListener('input',renderProductDatabase);
@@ -390,7 +358,7 @@ $('saveProduct').onclick=async()=>{
     const nextProduct=normalizeProduct({barcode:$('productBarcode').value,name:$('productName').value,brand:$('productBrand').value,packSize:$('productPackSize').value,unit:$('productUnit').value,category:$('productCategory').value});
     const next=products.filter(p=>p.barcode!==editingProductBarcode);
     if(next.some(p=>p.barcode===nextProduct.barcode))throw new Error('barcode นี้มีอยู่แล้ว กรุณาแก้ไขสินค้ารายการเดิมแทน');
-    if(productApiUrl&&!sharedProductDbConnected)throw new Error('ยังไม่ได้เชื่อมฐานข้อมูลร่วม กรุณาเชื่อมต่อใหม่ก่อนบันทึก');if(sharedProductDbConnected){productTeamCode=sessionStorage.getItem('cakeProductDbTeamCode')||'';await writeSharedProductDb({action:'upsert',product:nextProduct})}else commitProductData([...next,nextProduct],editingProductBarcode?'อัปเดตสินค้าแล้ว':'เพิ่มสินค้าใน Product DB แล้ว');
+    if(!sharedProductDbConnected)throw new Error('ยังไม่ได้เชื่อมฐานข้อมูลร่วม กรุณาเชื่อมต่อใหม่ก่อนบันทึก');if(sharedProductDbConnected){productTeamCode=sessionStorage.getItem('cakeProductDbTeamCode')||'';await writeSharedProductDb({action:'upsert',product:nextProduct})}else commitProductData([...next,nextProduct],editingProductBarcode?'อัปเดตสินค้าแล้ว':'เพิ่มสินค้าใน Product DB แล้ว');
     $('productEditor').hidden=true;
     editingProductBarcode=null;
     showProductLookup(nextProduct.barcode);
@@ -412,7 +380,7 @@ async function unlockApp(){
   const code=$('teamAccessCode').value.trim();
   if(!code){$('accessStatus').textContent='กรอกรหัสทีมก่อนเข้าสู่แอป';return}
   const button=$('enterApp');button.disabled=true;$('accessStatus').textContent='กำลังตรวจรหัสทีม…';
-  productApiUrl=localStorage.getItem(PRODUCT_API_URL_KEY)||DEFAULT_PRODUCT_API_URL;
+
   try{
     const result=await callProductApi({action:'verify'},true,code);
     if(!result.verified)throw new Error('Worker ไม่ได้ยืนยันรหัส');
@@ -491,7 +459,7 @@ $('purchaseScanBtn').onclick=()=>toggleScanner('purchase');
 </script>
 <script>
 if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
-  window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js?v=5").catch(err => console.warn("SW:", err)));
+  window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js?v=6").catch(err => console.warn("SW:", err)));
 }
 </script>
 </body></html>

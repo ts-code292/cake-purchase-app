@@ -12,3 +12,19 @@ APP_ORIGIN = "https://ts-code292.github.io"
 
 [secrets]
 required = ["GITHUB_TOKEN", "TEAM_WRITE_CODE"]
+
+[[ratelimits]]
+name = "TEAM_AUTH_LIMITER"
+namespace_id = "20261023"
+
+[ratelimits.simple]
+limit = 10
+period = 60
+
+[[ratelimits]]
+name = "TEAM_WRITE_LIMITER"
+namespace_id = "20261024"
+
+[ratelimits.simple]
+limit = 40
+period = 60

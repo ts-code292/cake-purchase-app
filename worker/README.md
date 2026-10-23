@@ -25,12 +25,12 @@ The app requires the shared team code at its entry screen. The Worker checks it 
 5. Deploy with `npx wrangler deploy`. Copy the resulting `https://...workers.dev` base URL (do not add `/products`).
 6. Open the app on each device. Enter the shared team code at the entry screen; the app verifies it with the Worker before opening. Then use **สแกน / จัดการสินค้า** or **บันทึกรอบซื้อ**.
 
-The Worker writes to `products.json` on the `main` branch. The initial catalog file is empty. The API caps the database at 1,000 products, limits field sizes, and only supports upsert/merge operations so a normal API request cannot replace or delete the full catalog. Existing device-local records are kept locally; after connecting, the app offers to merge missing local barcodes into the shared catalog. When both local and shared copies have the same barcode, the shared record is kept during that migration.
+The Worker writes to `products.json` on the `main` branch. The initial catalog file is empty. The API caps the database at 1,000 products, limits field sizes, and only supports upsert/merge operations so a normal API request cannot replace or delete the full catalog. It limits invalid codes to 10 attempts/minute/IP and valid writes to 40 requests/minute/IP. Existing device-local records are kept locally; after connecting, the app offers to merge missing local barcodes into the shared catalog. When both local and shared copies have the same barcode, the shared record is kept during that migration.
 
 ## API
 
 - `GET /products`: read the shared catalog (public).
 - `POST /products` with `action: verify`: validate the team code without changing the catalog and return the public catalog.
-- `POST /products`: write an `upsert`, `merge`, or `mergeMissing` action. Requires `Authorization: Bearer <team-code>`, JSON content type, and the configured app Origin. Invalid codes are rate-limited.
+- `POST /products`: write an `upsert`, `merge`, or `mergeMissing` action. Requires `Authorization: Bearer <team-code>`, JSON content type, and the configured app Origin. Invalid codes and write requests are rate-limited.
 
-Browser write requests require the exact configured `Origin` (`https://ts-code292.github.io`) and JSON content type. CORS/Origin checks only constrain browser callers; the team code remains the write authorization. The failed-code limiter allows 10 attempts per 60 seconds per client IP within each Cloudflare location; Cloudflare documents this limiter as approximate and eventually consistent. Update `APP_ORIGIN` if the GitHub Pages site uses another origin.
+Browser write requests require the exact configured `Origin` (`https://ts-code292.github.io`) and JSON content type. CORS/Origin checks only constrain browser callers; the team code remains the write authorization. The failed-code limiter allows 10 attempts per 60 seconds per client IP and the write limiter allows 40 writes per minute/IP within each Cloudflare location; Cloudflare documents these limits as approximate and eventually consistent. Update `APP_ORIGIN` if the GitHub Pages site uses another origin.

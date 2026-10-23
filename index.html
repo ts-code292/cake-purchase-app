@@ -111,6 +111,7 @@ footer{font-size:.76rem;color:#8e8e93;text-align:center;padding:4px 18px 24px}
   </section>
   <section class="card wide" id="productDatabase">
     <h2>รายการสินค้า <span class="pill" id="productCount">0 รายการ</span></h2>
+    <p class="small">เพื่อป้องกันข้อมูลกลางหาย ไม่มีปุ่มลบสินค้า · หากข้อมูลผิดให้ใช้ปุ่มแก้ไข</p>
     <label for="productSearch">ค้นหาชื่อ, แบรนด์, barcode หรือหมวดหมู่</label>
     <input id="productSearch" type="search" placeholder="พิมพ์เพื่อค้นหา">
     <div class="actions" style="margin-top:12px">
@@ -273,7 +274,7 @@ function persistProductData(next,storage=localStorage){
 function renderProductDatabase(){
   $('productCount').textContent=products.length+' รายการ';
   const shown=searchProductData(products,$('productSearch').value);
-  $('productList').innerHTML=shown.length?shown.map(p=>{const i=products.findIndex(x=>x.barcode===p.barcode);return '<div class="product-row"><strong>'+esc(p.name)+'</strong><div class="product-meta">Barcode: '+esc(p.barcode)+' · '+esc(p.brand||'ไม่ระบุแบรนด์')+'</div><div class="product-meta">แพ็ก '+esc(p.packSize||'—')+' '+esc(p.unit)+' · '+esc(p.category)+'</div><div class="product-row-actions"><button class="secondary" type="button" data-product-action="edit" data-product-index="'+i+'">แก้ไข</button><button class="danger" type="button" data-product-action="delete" data-product-index="'+i+'">ลบ</button></div></div>'}).join(''):'<p class="small">'+(products.length?'ไม่พบสินค้าที่ค้นหา':'ยังไม่มีสินค้าในฐานข้อมูล')+'</p>';
+  $('productList').innerHTML=shown.length?shown.map(p=>{const i=products.findIndex(x=>x.barcode===p.barcode);return '<div class="product-row"><strong>'+esc(p.name)+'</strong><div class="product-meta">Barcode: '+esc(p.barcode)+' · '+esc(p.brand||'ไม่ระบุแบรนด์')+'</div><div class="product-meta">แพ็ก '+esc(p.packSize||'—')+' '+esc(p.unit)+' · '+esc(p.category)+'</div><div class="product-row-actions"><button class="secondary" type="button" data-product-action="edit" data-product-index="'+i+'">แก้ไข</button></div></div>'}).join(''):'<p class="small">'+(products.length?'ไม่พบสินค้าที่ค้นหา':'ยังไม่มีสินค้าในฐานข้อมูล')+'</p>';
 }
 function commitProductData(next,message){
   try{products=persistProductData(next);renderProductDatabase();$('productDbStatus').textContent=message}
@@ -406,14 +407,10 @@ function initializeProductDatabase(){
 }
 $('productSearch').addEventListener('input',renderProductDatabase);
 $('productList').addEventListener('click',event=>{
-  const button=event.target.closest('[data-product-action]');
+  const button=event.target.closest('[data-product-action="edit"]');
   if(!button)return;
   const product=products[Number(button.dataset.productIndex)];
-  if(!product)return;
-  if(button.dataset.productAction==='edit')openProductEditor(product);
-  if(button.dataset.productAction==='delete'&&confirm('ลบ '+product.name+' ('+product.barcode+') ออกจาก Product DB หรือไม่?')){
-    (async()=>{try{if(productApiUrl&&!sharedProductDbConnected)throw new Error('ยังไม่ได้เชื่อมฐานข้อมูลร่วม กรุณาเชื่อมต่อใหม่ก่อนบันทึก');if(sharedProductDbConnected){productTeamCode=sessionStorage.getItem('cakeProductDbTeamCode')||'';await writeSharedProductDb({action:'delete',barcode:product.barcode})}else commitProductData(products.filter(p=>p.barcode!==product.barcode),'ลบสินค้าแล้ว');$('productDbStatus').textContent='ลบสินค้าแล้ว'}catch(e){$('productDbStatus').textContent='ลบไม่สำเร็จ: '+e.message}})();
-  }
+  if(product)openProductEditor(product);
 });
 $('saveProduct').onclick=async()=>{
   try{

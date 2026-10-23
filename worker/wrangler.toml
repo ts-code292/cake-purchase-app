@@ -1,0 +1,14 @@
+name = "cake-products-api"
+main = "src/index.js"
+compatibility_date = "2026-10-23"
+workers_dev = true
+
+[vars]
+GITHUB_OWNER = "ts-code292"
+GITHUB_REPO = "cake-purchase-app"
+GITHUB_BRANCH = "main"
+GITHUB_FILE_PATH = "products.json"
+APP_ORIGIN = "https://ts-code292.github.io"
+
+[secrets]
+required = ["GITHUB_TOKEN", "TEAM_WRITE_CODE"]

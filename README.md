@@ -23,6 +23,10 @@
 - `sw.js` — cache app shell สำหรับ PWA
 - `manifest.webmanifest`, `icons/` — metadata และไอคอน PWA
 
+## ค่าใช้จ่าย
+
+แนวทางนี้ตั้งใจใช้แผนฟรี: GitHub Pages สำหรับ repository สาธารณะ และ Cloudflare Workers Free บนโดเมน `workers.dev` โดยไม่ใช้ฐานข้อมูลหรือบริการเสริมที่ต้องจ่ายเงิน แผน Workers Free จำกัด 100,000 คำขอต่อวัน; หากเกิน โควตาจะปฏิเสธคำขอจนกว่าจะรีเซ็ต ให้คงบัญชีไว้ที่ Free และอย่าอัปเกรดเป็น Workers Paid
+
 ## ข้อจำกัด
 
 - ต้องตั้งค่าและ deploy Worker ก่อนการอ่าน/เขียน Product DB ร่วมกันจะทำงาน

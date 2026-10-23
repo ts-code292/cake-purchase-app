@@ -1,5 +1,22 @@
 {
   "schemaVersion": 1,
-  "updatedAt": null,
-  "products": []
+  "updatedAt": "2026-10-23T08:56:50.349Z",
+  "products": [
+    {
+      "barcode": "8858705607398",
+      "name": "นมข้นหวาน",
+      "brand": "Carnation",
+      "packSize": "1",
+      "unit": "หลอด",
+      "category": "วัตถุดิบ"
+    },
+    {
+      "barcode": "8859015707013",
+      "name": "น้ำมะพร้าว",
+      "brand": "IF",
+      "packSize": "1",
+      "unit": "ขวด",
+      "category": "วัตถุดิบ"
+    }
+  ]
 }

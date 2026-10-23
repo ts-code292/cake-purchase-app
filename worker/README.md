@@ -6,7 +6,7 @@ This Worker lets the static GitHub Pages app read a public product catalog and w
 
 The repository is public, so `products.json` and its product records are readable by anyone. Keep this catalog to barcode, product name, brand, pack size, unit, and category. Do not add prices, costs, stock counts, customer data, or other private information.
 
-The app asks for a shared write code when staff connect. The Worker checks it and uses the GitHub token stored as a Cloudflare Worker secret. The write code is kept only in the current browser session. Use a long random code, and share it only with staff.
+The app asks for a shared write code when staff connect. The Worker checks it and uses the GitHub token stored as a Cloudflare Worker secret. The write code is kept only in the current browser session. Use a long random code, and share it only with staff. Anyone with the code can write to the catalog; rotate it in Cloudflare if it is exposed.
 
 ## Deploy the Worker
 
@@ -17,7 +17,7 @@ The app asks for a shared write code when staff connect. The Worker checks it an
    - `npx wrangler secret put GITHUB_TOKEN`
    - `npx wrangler secret put TEAM_WRITE_CODE`
 5. Deploy with `npx wrangler deploy`. Copy the resulting `https://...workers.dev` base URL (do not add `/products`).
-6. Open the app on each device, enter the Worker URL and shared write code in Product DB, then choose **เชื่อม / โหลดฐานกลาง**.
+6. Open the app on each device, enter the Worker URL and shared write code in Product DB, then choose **เชื่อมฐานข้อมูลทีม**.
 
 The Worker writes to `products.json` on the `main` branch. The initial catalog file is empty. Existing device-local records are kept locally; after connecting, the app offers to merge missing local barcodes into the shared catalog. When both local and shared copies have the same barcode, the shared record is kept during that migration.
 

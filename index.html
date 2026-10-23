@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#f2f2f7"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self' https://cake-products-api.techinsaihaikham.workers.dev; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="บันทึกรอบซื้อ"><link rel="manifest" href="./manifest.webmanifest"><link rel="apple-touch-icon" href="./icons/icon-192.png"><title>Cake Stock · บันทึกซื้อ</title>
+<html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#f2f2f7"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self' https://cake-products-api.techinsaihaikham.workers.dev; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="บันทึกรอบซื้อ"><link rel="manifest" href="./manifest.webmanifest"><link rel="apple-touch-icon" href="./icons/icon-192.png"><title>Cake Stock · บันทึกซื้อ</title>
 <style>
 :root{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display","Helvetica Neue",system-ui,sans-serif;color:#1c1c1e;background:#f2f2f7;--blue:#007aff;--line:#e5e5ea;--muted:#8e8e93}
 *{box-sizing:border-box}
@@ -78,7 +78,7 @@ footer{font-size:.76rem;color:#8e8e93;text-align:center;padding:4px 18px 24px}
   </section>
 </div>
 <div id="appShell" hidden>
-<header><div class="app-header"><div><h1>บันทึกรอบซื้อ</h1><p>Cake Stock <span aria-hidden="true">·</span> เชียงใหม่ <span class="pill" aria-label="เวอร์ชัน 1.0.1">V.1.0.1</span></p></div><button id="logoutApp" class="secondary" type="button">ออกจากระบบ</button></div></header>
+<header><div class="app-header"><div><h1>บันทึกรอบซื้อ</h1><p>Cake Stock <span aria-hidden="true">·</span> เชียงใหม่ <span class="pill" aria-label="เวอร์ชัน 1.0.2">V.1.0.2</span></p></div><button id="logoutApp" class="secondary" type="button">ออกจากระบบ</button></div></header>
 <div class="privacy-note" role="note">
   <strong>Product DB ใช้ร่วมกันได้ · ข้อมูลสินค้าอ่านได้สาธารณะ</strong>
   <p>ฐานข้อมูลสินค้า (barcode, ชื่อ, แบรนด์, ขนาดแพ็ก, หน่วย และหมวดหมู่) เก็บในไฟล์สาธารณะบน GitHub เพื่อให้ทุกเครื่องอ่านร่วมกันได้ ห้ามใส่ราคา ต้นทุน สต็อก หรือข้อมูลส่วนบุคคล</p>
@@ -153,14 +153,7 @@ footer{font-size:.76rem;color:#8e8e93;text-align:center;padding:4px 18px 24px}
 </main>
 <footer>ต้นแบบ MVP · สต็อกจะยังไม่เพิ่มจนกว่ากรุงเทพฯ จะตรวจและยืนยัน</footer>
 </div>
-<script>
-function retryZxingCdn(script){
-  script.onerror=null;
-  script.src='https://cdn.jsdelivr.net/npm/@zxing/browser@0.1.5/umd/zxing-browser.min.js';
-  script.onerror=()=>{script.dataset.failed='true'};
-}
-</script>
-<script id="zxingLibrary" src="https://unpkg.com/@zxing/browser@0.1.5/umd/zxing-browser.min.js" onerror="retryZxingCdn(this)"></script>
+<script id="zxingLibrary" src="./vendor/zxing-browser.min.js"></script>
 <script>
 const $=id=>document.getElementById(id);let items=[],receiptFiles=[],stream=null,detector=null;
 const now=new Date();now.setMinutes(now.getMinutes()-now.getTimezoneOffset());$('date').value=now.toISOString().slice(0,16);

@@ -114,28 +114,14 @@ footer{font-size:.76rem;color:#8e8e93;text-align:center;padding:4px 18px 24px}
     <p class="small">เพื่อป้องกันข้อมูลกลางหาย ไม่มีปุ่มลบสินค้า · หากข้อมูลผิดให้ใช้ปุ่มแก้ไข</p>
     <label for="productSearch">ค้นหาชื่อ, แบรนด์, barcode หรือหมวดหมู่</label>
     <input id="productSearch" type="search" placeholder="พิมพ์เพื่อค้นหา">
-    <div class="actions" style="margin-top:12px">
-      <button id="exportProductDb" class="secondary" type="button">ส่งออก Product DB (JSON)</button>
-      <button id="chooseProductImport" class="secondary" type="button">นำเข้า / กู้คืน JSON</button>
-    </div>
-    <input id="productImportFile" type="file" accept="application/json,.json" hidden>
     <div class="product-editor product-connection">
       <h3>ฐานข้อมูลสินค้าของทีม</h3>
       <p class="small">เข้าสู่ระบบด้วยรหัสทีมแล้ว · เพิ่ม/แก้ไขได้ในเมนูนี้</p>
-      <label for="productApiUrl">Worker URL</label>
-      <input id="productApiUrl" type="url" inputmode="url" readonly aria-label="Worker URL ฐานสินค้าของร้าน">
       <button id="connectSharedProductDb" class="secondary" type="button">โหลด / รีเฟรชฐานสินค้า</button>
       <p class="small" id="productCloudStatus" aria-live="polite">กำลังเชื่อมฐานกลาง…</p>
       <button id="uploadPendingLocalProducts" type="button" hidden>ส่งสินค้าในเครื่องขึ้นฐานกลาง</button>
-      <button id="downloadLocalProductBackup" class="secondary" type="button" style="margin-top:8px">ส่งออก JSON สำรองสินค้า</button>
     </div>
     <div id="productDbStatus" class="small" role="status" aria-live="polite">กำลังโหลดข้อมูลสินค้า</div>
-    <div id="productImportReview" class="import-review" hidden>
-      <p id="productImportSummary" class="small"></p>
-      <p class="small"><b>รวม/อัปเดต</b> จะเพิ่มสินค้าใหม่และเขียนทับ barcode ที่ซ้ำกับข้อมูลเดิม · <b>แทนที่ทั้งหมด</b> จะลบข้อมูลเดิมในเครื่องแล้วใช้ไฟล์นี้แทน</p>
-      <div class="actions"><button id="mergeProductImport" type="button">รวม / อัปเดต</button><button id="replaceProductImport" class="danger" type="button">แทนที่ DB ทั้งหมด</button></div>
-      <button id="cancelProductImport" class="secondary" type="button" style="margin-top:8px">ยกเลิกนำเข้า</button>
-    </div>
     <div id="productList" class="product-list"><p class="small">กำลังโหลดสินค้า…</p></div>
   </section>
 </section>
@@ -300,8 +286,7 @@ function productApiErrorMessage(error){
   return message;
 }
 async function connectSharedProductDb(){
-  productApiUrl=$('productApiUrl').value.trim()||DEFAULT_PRODUCT_API_URL;
-  $('productApiUrl').value=productApiUrl;localStorage.setItem(PRODUCT_API_URL_KEY,productApiUrl);
+  productApiUrl=localStorage.getItem(PRODUCT_API_URL_KEY)||DEFAULT_PRODUCT_API_URL;
   $('productCloudStatus').textContent='กำลังโหลดรายการสินค้า…';
   try{
     const remote=normalizeRemoteProducts((await callProductApi()).products),remoteCodes=new Set(remote.map(p=>p.barcode));
@@ -332,17 +317,6 @@ async function uploadPendingCloudProducts(){
   }catch(e){$('productCloudStatus').textContent='ส่งข้อมูลไม่สำเร็จ: '+productApiErrorMessage(e)}
 }
 $('connectSharedProductDb').onclick=connectSharedProductDb;$('uploadPendingLocalProducts').onclick=uploadPendingCloudProducts;
-$('downloadLocalProductBackup').onclick=async()=>{
-  try{
-    const saved=[...pendingCloudProducts()];
-    try{saved.push(...JSON.parse(localStorage.getItem('cakeProductDatabaseLocalBackupV1')||'[]'))}catch(e){}
-    const backup=saved.length?[...new Map(saved.map(p=>[p.barcode,p])).values()]:products;
-    const blob=new Blob([exportProductData(backup)],{type:'application/json'});
-    const file=new File([blob],'cake-product-db-backup.json',{type:'application/json'});
-    if(navigator.canShare?.({files:[file]})&&navigator.share){await navigator.share({files:[file],title:'สำรอง Product DB'});$('productDbStatus').textContent='เปิดเมนูแชร์แล้ว · เลือกบันทึกไฟล์สำรอง';return}
-    const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=file.name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1500);$('productDbStatus').textContent='ส่งออกไฟล์สำรอง Product DB แล้ว';
-  }catch(e){$('productDbStatus').textContent='ส่งออกไฟล์สำรองไม่สำเร็จ: '+e.message}
-};
 function openProductEditor(product=null,barcode=''){
   editingProductBarcode=product?product.barcode:null;
   $('productEditorTitle').textContent=product?'แก้ไขสินค้าใน Product DB':'เพิ่มสินค้าใหม่ใน Product DB';
@@ -402,7 +376,6 @@ function initializeProductDatabase(){
   catch(e){products=[];$('productDbStatus').textContent='อ่านข้อมูลในเครื่องไม่ได้: '+e.message}
   productTeamCode=sessionStorage.getItem('cakeProductDbTeamCode')||'';
   productApiUrl=localStorage.getItem(PRODUCT_API_URL_KEY)||DEFAULT_PRODUCT_API_URL;
-  $('productApiUrl').value=productApiUrl;
   renderProductDatabase();updatePendingCloudButton();connectSharedProductDb();
 }
 $('productSearch').addEventListener('input',renderProductDatabase);
@@ -427,45 +400,6 @@ $('saveProduct').onclick=async()=>{
 $('cancelProduct').onclick=()=>{$('productEditor').hidden=true;editingProductBarcode=null};
 $('lookupProduct').onclick=()=>showProductLookup($('barcode').value);
 $('barcode').addEventListener('change',()=>showProductLookup($('barcode').value));
-$('chooseProductImport').onclick=()=>$('productImportFile').click();
-$('cancelProductImport').onclick=()=>{pendingProductImport=null;$('productImportReview').hidden=true;$('productImportFile').value=''};
-function readProductImportFile(file){
-  if(typeof file.text==='function')return file.text();
-  return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result||''));reader.onerror=()=>reject(reader.error||new Error('อ่านไฟล์ไม่สำเร็จ'));reader.readAsText(file)});
-}
-$('productImportFile').addEventListener('change',async()=>{
-  const file=$('productImportFile').files?.[0];
-  if(!file)return;
-  try{
-    const parsed=parseProductImport(await readProductImportFile(file));
-    pendingProductImport=parsed;
-    const conflicts=parsed.products.filter(p=>products.some(old=>old.barcode===p.barcode)).length;
-    const warnings=parsed.duplicateBarcodes.length?' · เตือน: barcode ซ้ำในไฟล์ '+parsed.duplicateBarcodes.join(', ')+' (ใช้ข้อมูลรายการสุดท้าย)':'';
-    $('productImportSummary').textContent='ตรวจไฟล์ผ่าน '+parsed.products.length+' รายการ · barcode ที่ซ้ำกับ DB ปัจจุบัน '+conflicts+' รายการ'+warnings;
-    $('productImportReview').hidden=false;
-    $('productDbStatus').textContent='ตรวจสอบไฟล์แล้ว เลือกวิธีนำเข้า';
-  }catch(e){pendingProductImport=null;$('productImportReview').hidden=true;$('productDbStatus').textContent='นำเข้าไม่ได้: '+e.message}
-});
-async function applyProductImport(mode){
-  if(!pendingProductImport)return;
-  try{
-    const result=mergeProductData(products,pendingProductImport.products,mode);
-    if(productApiUrl&&!sharedProductDbConnected)throw new Error('ยังไม่ได้เชื่อมฐานข้อมูลร่วม กรุณาเชื่อมต่อใหม่ก่อนบันทึก');if(sharedProductDbConnected){productTeamCode=sessionStorage.getItem('cakeProductDbTeamCode')||'';await writeSharedProductDb({action:mode,products:pendingProductImport.products})}else commitProductData(result.products,mode==='replace'?'แทนที่ Product DB แล้ว':'นำเข้าและอัปเดต Product DB แล้ว');
-    if(mode==='merge'&&result.conflicts.length)$('productDbStatus').textContent+=' · เขียนทับ barcode ซ้ำ '+result.conflicts.map(esc).join(', ');
-    pendingProductImport=null;$('productImportReview').hidden=true;$('productImportFile').value='';
-  }catch(e){$('productDbStatus').textContent='นำเข้าไม่สำเร็จ: '+e.message}
-}
-$('mergeProductImport').onclick=()=>applyProductImport('merge');
-$('replaceProductImport').onclick=()=>{if(confirm('แทนที่ Product DB ในเครื่องทั้งหมดด้วยข้อมูลจากไฟล์นี้?'))applyProductImport('replace')};
-$('exportProductDb').onclick=async()=>{
-  try{
-    const blob=new Blob([exportProductData(products)],{type:'application/json'});
-    const file=new File([blob],'cake-product-db.json',{type:'application/json'});
-    if(navigator.canShare?.({files:[file]})&&navigator.share){await navigator.share({files:[file],title:'สำรอง Product DB'});$('productDbStatus').textContent='เปิดเมนูแชร์แล้ว · เลือกบันทึกลง Files เพื่อสำรอง Product DB';return}
-    const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=file.name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1500);
-    $('productDbStatus').textContent='ส่งออก Product DB เป็น JSON แล้ว';
-  }catch(e){$('productDbStatus').textContent=e?.name==='AbortError'?'ยกเลิกการส่งออก':'ส่งออกไม่สำเร็จ: '+e.message}
-};
 function showMainScreen(screenId){
   if(screenId!=='productScreen'&&scanning)stopScanner();
   document.querySelectorAll('.screen').forEach(screen=>{screen.hidden=screen.id!==screenId});

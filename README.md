@@ -25,6 +25,7 @@
 - `products.json` — ฐานข้อมูลสินค้าสาธารณะ
 - `worker/` — API สำหรับอ่าน/เขียน Product DB
 - `sw.js` — cache app shell สำหรับ PWA
+- `vendor/zxing-browser.min.js` — ZXing 0.1.5 ที่แอปโฮสต์เอง พร้อม license ในโฟลเดอร์เดียวกัน
 - `manifest.webmanifest`, `icons/` — metadata และไอคอน PWA
 
 ## ค่าใช้จ่าย

@@ -33,15 +33,25 @@ button.danger{background:#fff0f0;color:#c62828;border:0}
 footer{font-size:.76rem;color:#8e8e93;text-align:center;padding:4px 18px 24px}
 @media(min-width:650px){main{grid-template-columns:1fr 1fr}.wide{grid-column:1/-1}}
 @media(max-width:420px){main{padding:14px 12px;gap:14px}.card{padding:16px 14px}.row{gap:7px}.row button{padding:10px 12px;font-size:.88rem}}
+.privacy-note{margin:12px 14px 0;padding:13px 15px;background:#fff;border:1px solid #d1d1d6;border-radius:14px;font-size:.85rem;line-height:1.45;color:#3a3a3c}
+.privacy-note p{margin:6px 0 0}
+.privacy-warning{color:#8a4b00;font-size:.78rem}
 </style></head><body>
 <header><h1>บันทึกรอบซื้อ</h1><p>Cake Stock <span aria-hidden="true">·</span> เชียงใหม่</p></header>
+<div class="privacy-note" role="note">
+  <strong>การใช้งานภายใน · ข้อมูลไม่ถูกส่งขึ้นเว็บ</strong>
+  <p>ลิงก์นี้เปิดหน้าบันทึกซื้อได้โดยผู้ที่มีลิงก์ แต่รายการและรูปใบเสร็จเก็บไว้ในเบราว์เซอร์ของเครื่องที่บันทึกเท่านั้น คนอื่นที่เปิดลิงก์จะไม่เห็นข้อมูลของคุณโดยอัตโนมัติ</p>
+  <p><b>ส่งต่อให้กรุงเทพฯ:</b> กด “ส่งออกชุดข้อมูล” แล้วแชร์/บันทึกไฟล์ไปยังโฟลเดอร์ Google Drive ของร้านทุกครั้งหลังจบรอบซื้อ อย่าพึ่งเก็บฉบับร่างไว้ในเครื่องอย่างเดียว</p>
+  <p class="privacy-warning">ยังไม่มีระบบล็อกอินหรือสิทธิ์พนักงาน และไฟล์ที่แชร์ใน Drive จะเข้าถึงได้ตามสิทธิ์ของโฟลเดอร์นั้น</p>
+</div>
 <main>
 <section class="card"><h2>1) รอบซื้อ</h2><label>ร้านค้า</label><input id="shop" placeholder="ชื่อร้าน / ผู้ขาย"><label>วันที่ซื้อ</label><input id="date" type="datetime-local"><label>หมายเหตุ (ถ้ามี)</label><input id="note" placeholder="เช่น ซื้อรอบเช้า"><div class="small" style="margin-top:8px">เลขรอบซื้อ: <strong id="sessionId"></strong></div></section>
-<section class="card"><h2>2) เพิ่มสินค้า</h2><label>บาร์โค้ด</label><div class="row"><input id="barcode" inputmode="numeric" placeholder="สแกนหรือพิมพ์บาร์โค้ด"><button id="scanBtn" class="secondary" type="button">เปิดกล้อง</button></div><video id="scanner" playsinline></video><div class="small" id="scanStatus">กล้องต้องใช้เบราว์เซอร์ที่รองรับ Barcode Detection API และอนุญาตกล้อง</div><label>ชื่อสินค้า / วัตถุดิบ</label><input id="name" placeholder="เช่น แป้งเค้ก หรือกล่องเค้ก S"><div class="row"><div><label>ขนาดแพ็ก</label><input id="packSize" placeholder="เช่น 1"></div><div><label>หน่วย</label><input id="unit" placeholder="กก. / ลิตร / ใบ"></div><div><label>จำนวนแพ็ก</label><input id="qty" type="number" min="0.01" step="any" placeholder="0"></div></div><label>ประเภท</label><select id="category"><option>วัตถุดิบ</option><option>ของใช้ร้าน (ติดตามสต็อก)</option><option>ไม่ติดตามสต็อก</option><option>ยังไม่ทราบ / รอตรวจ</option></select><button id="addItem" style="width:100%;margin-top:12px">เพิ่มรายการในรอบซื้อ</button></section>
+<section class="card"><h2>2) เพิ่มสินค้า</h2><label>บาร์โค้ด</label><div class="row"><input id="barcode" inputmode="numeric" placeholder="สแกนหรือพิมพ์บาร์โค้ด"><button id="scanBtn" class="secondary" type="button">เปิดกล้อง</button></div><video id="scanner" playsinline></video><div class="small" id="scanStatus">สแกนด้วยกล้องผ่าน ZXing (ต้องเปิดเว็บ HTTPS และอนุญาตกล้อง)</div><label>ชื่อสินค้า / วัตถุดิบ</label><input id="name" placeholder="เช่น แป้งเค้ก หรือกล่องเค้ก S"><div class="row"><div><label>ขนาดแพ็ก</label><input id="packSize" placeholder="เช่น 1"></div><div><label>หน่วย</label><input id="unit" placeholder="กก. / ลิตร / ใบ"></div><div><label>จำนวนแพ็ก</label><input id="qty" type="number" min="0.01" step="any" placeholder="0"></div></div><label>ประเภท</label><select id="category"><option>วัตถุดิบ</option><option>ของใช้ร้าน (ติดตามสต็อก)</option><option>ไม่ติดตามสต็อก</option><option>ยังไม่ทราบ / รอตรวจ</option></select><button id="addItem" style="width:100%;margin-top:12px">เพิ่มรายการในรอบซื้อ</button></section>
 <section class="card wide"><h2>3) รายการที่บันทึก <span class="pill" id="count">0 รายการ</span></h2><div id="items"><p class="small">ยังไม่มีรายการ เพิ่มสินค้าจากส่วนด้านบน</p></div></section>
 <section class="card"><h2>4) ใบเสร็จ</h2><label>ถ่ายรูปหรือเลือกรูปใบเสร็จ (แนบได้หลายรูป)</label><input id="receipts" type="file" accept="image/*" capture="environment" multiple><div id="receiptPreview"></div><p class="small">รูปจะรวมอยู่ในไฟล์ส่งออกของรอบซื้อ (อาจทำให้ไฟล์มีขนาดใหญ่)</p></section>
 <section class="card"><h2>5) บันทึกและส่งต่อ</h2><div class="actions"><button id="saveDraft" class="secondary">เก็บฉบับร่างในเครื่อง</button><button id="export">ส่งออกชุดข้อมูล</button></div><p class="small" id="status" aria-live="polite">ยังไม่ได้ส่งออก · ยังไม่เชื่อม Google Drive หรือฐานข้อมูลกรุงเทพฯ</p></section>
 </main><footer>ต้นแบบ MVP · สต็อกจะยังไม่เพิ่มจนกว่ากรุงเทพฯ จะตรวจและยืนยัน</footer>
+<script src="https://unpkg.com/@zxing/browser@0.1.5/umd/index.min.js"></script>
 <script>
 const $=id=>document.getElementById(id);let items=[],receiptFiles=[],stream=null,detector=null;
 const now=new Date();now.setMinutes(now.getMinutes()-now.getTimezoneOffset());$('date').value=now.toISOString().slice(0,16);
@@ -53,8 +63,45 @@ $('receipts').onchange=()=>{receiptFiles=Array.from($('receipts').files||[]);$('
 function payload(){return{schemaVersion:1,sessionId,shop:$('shop').value.trim(),purchasedAt:$('date').value,note:$('note').value.trim(),items,receiptCount:receiptFiles.length,workflowStatus:'pending_review',createdAt:new Date().toISOString()}}
 function fileAsData(f){return new Promise(resolve=>{const r=new FileReader();r.onload=()=>resolve({name:f.name,type:f.type,dataUrl:r.result});r.readAsDataURL(f)})}
 $('saveDraft').onclick=async()=>{localStorage.setItem('cakePurchaseDraft',JSON.stringify({...payload(),receipts:await Promise.all(receiptFiles.map(fileAsData))}));$('status').textContent='เก็บฉบับร่างไว้ในเบราว์เซอร์เครื่องนี้แล้ว'};
-$('export').onclick=async()=>{if(!items.length){alert('เพิ่มรายการซื้ออย่างน้อย 1 รายการก่อนส่งออก');return}const data={...payload(),receipts:await Promise.all(receiptFiles.map(fileAsData))};const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=sessionId+'.json';a.click();URL.revokeObjectURL(url);$('status').textContent='สร้างไฟล์รอบซื้อแล้ว · อัปโหลด/แชร์ไฟล์นี้ไปยังโฟลเดอร์ Google Drive ได้'};
-$('scanBtn').onclick=async()=>{if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;$('scanner').style.display='none';$('scanBtn').textContent='เปิดกล้อง';return}if(!('BarcodeDetector'in window)){$('scanStatus').textContent='เบราว์เซอร์นี้ไม่รองรับสแกนผ่านกล้อง โปรดพิมพ์บาร์โค้ดหรือใช้เครื่องสแกนภายนอก';return}try{detector=new BarcodeDetector({formats:['ean_13','ean_8','upc_a','upc_e','code_128','qr_code']});stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});$('scanner').srcObject=stream;$('scanner').style.display='block';$('scanBtn').textContent='ปิดกล้อง';await $('scanner').play();$('scanStatus').textContent='เล็งกล้องไปที่บาร์โค้ด';const loop=async()=>{if(!stream)return;try{const codes=await detector.detect($('scanner'));if(codes.length){$('barcode').value=codes[0].rawValue;$('scanStatus').textContent='อ่านบาร์โค้ดแล้ว';stream.getTracks().forEach(t=>t.stop());stream=null;$('scanner').style.display='none';$('scanBtn').textContent='เปิดกล้อง';return}}catch(e){}requestAnimationFrame(loop)};loop()}catch(e){$('scanStatus').textContent='เปิดกล้องไม่ได้: ตรวจสิทธิ์กล้อง และเปิดหน้าเว็บผ่าน HTTPS หรือ localhost'}};
+$('export').onclick=async()=>{if(!items.length){alert('เพิ่มรายการซื้ออย่างน้อย 1 รายการก่อนส่งออก');return}const data={...payload(),receipts:await Promise.all(receiptFiles.map(fileAsData))};const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const filename=sessionId+'.json';try{const file=new File([blob],filename,{type:'application/json'});if(navigator.canShare&&navigator.canShare({files:[file]})&&navigator.share){await navigator.share({files:[file],title:'ชุดข้อมูลรอบซื้อ'});$('status').textContent='เปิดเมนูแชร์แล้ว · เลือก Drive หรือบันทึกลง Files เพื่อส่งให้กรุงเทพฯ';return}}catch(err){if(err&&err.name==='AbortError'){$('status').textContent='ยกเลิกการแชร์';return}}const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(url),1500);$('status').textContent='ดาวน์โหลดไฟล์รอบซื้อแล้ว · เปิดเมนูแชร์ของ iPhone หรือแอป Files แล้วอัปโหลดไปยังโฟลเดอร์ Google Drive ของร้าน'};
+let scanControls=null, scanning=false;
+$('scanBtn').onclick=async()=>{
+  if(scanning){
+    try{scanControls?.stop()}catch(e){}
+    scanControls=null;scanning=false;
+    $('scanner').srcObject=null;$('scanner').style.display='none';
+    $('scanBtn').textContent='เปิดกล้อง';
+    $('scanStatus').textContent='ปิดกล้องแล้ว';
+    return;
+  }
+  if(!window.ZXing || !ZXing.BrowserMultiFormatReader){
+    $('scanStatus').textContent='โหลดตัวอ่านบาร์โค้ดไม่สำเร็จ (ต้องเชื่อมอินเทอร์เน็ต) — พิมพ์บาร์โค้ดเองได้';
+    return;
+  }
+  try{
+    const reader=new ZXing.BrowserMultiFormatReader();
+    $('scanner').style.display='block';
+    $('scanBtn').textContent='กำลังเปิดกล้อง…';
+    $('scanStatus').textContent='กำลังขอสิทธิ์กล้อง โปรดกด Allow หาก Safari ถาม';
+    scanControls=await reader.decodeFromVideoDevice(undefined,$('scanner'),(result,err,controls)=>{
+      if(result){
+        $('barcode').value=result.getText();
+        $('scanStatus').textContent='อ่านบาร์โค้ดแล้ว: '+result.getText();
+        try{controls.stop()}catch(e){}
+        scanControls=null;scanning=false;
+        $('scanner').srcObject=null;$('scanner').style.display='none';
+        $('scanBtn').textContent='เปิดกล้อง';
+      }
+    });
+    scanning=true;
+    $('scanBtn').textContent='ปิดกล้อง';
+    $('scanStatus').textContent='เล็งกล้องให้บาร์โค้ดอยู่ในกรอบภาพ';
+  }catch(e){
+    scanControls=null;scanning=false;
+    $('scanner').style.display='none';$('scanBtn').textContent='เปิดกล้อง';
+    $('scanStatus').textContent='เปิดกล้องไม่สำเร็จ: '+(e?.message||'ตรวจสิทธิ์กล้อง และเปิดผ่าน HTTPS ใน Safari');
+  }
+}
 </script>
 <script>
 if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {

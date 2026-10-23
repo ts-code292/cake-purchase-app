@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-10-23T09:23:57.599Z",
+  "updatedAt": "2026-10-23T09:41:44.728Z",
   "products": [
     {
       "barcode": "8858705607398",
@@ -16,6 +16,14 @@
       "brand": "IF",
       "packSize": "1",
       "unit": "ขวด",
+      "category": "วัตถุดิบ"
+    },
+    {
+      "barcode": "8851530132004",
+      "name": "น้ำ",
+      "brand": "Mont Fleur",
+      "packSize": "1",
+      "unit": "1.5ลิตร",
       "category": "วัตถุดิบ"
     }
   ]

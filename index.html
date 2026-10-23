@@ -45,6 +45,11 @@ footer{font-size:.76rem;color:#8e8e93;text-align:center;padding:4px 18px 24px}
 #productLookupResult{margin-top:8px;line-height:1.5}
 #productLookupResult button{min-height:38px;padding:7px 12px;margin-top:6px}
 @media(max-width:420px){.product-editor,.import-review{padding:12px}.product-row-actions button{flex:1}}
+.product-connection{background:#f4f8ff}
+.product-connection hr{border:0;border-top:1px solid #d9e5f5;margin:16px 0}
+.product-connection>button{width:100%;margin-top:8px}
+#productWriteStatus[data-state="success"]{color:#18794e}
+#productWriteStatus[data-state="error"]{color:#b42318}
 
 .privacy-note{margin:12px 14px 0;padding:13px 15px;background:#fff;border:1px solid #d1d1d6;border-radius:14px;font-size:.85rem;line-height:1.45;color:#3a3a3c}
 .privacy-note p{margin:6px 0 0}
@@ -80,15 +85,20 @@ footer{font-size:.76rem;color:#8e8e93;text-align:center;padding:4px 18px 24px}
     <button id="chooseProductImport" class="secondary" type="button">นำเข้า / กู้คืน JSON</button>
   </div>
   <input id="productImportFile" type="file" accept="application/json,.json" hidden>
-  <div class="product-editor">
-    <h3>ฐานข้อมูลร่วมของทีม</h3>
-    <label for="productApiUrl">Worker URL (อ่านฐานข้อมูลสาธารณะ)</label>
+  <div class="product-editor product-connection">
+    <h3>ฐานข้อมูลสินค้าของทีม</h3>
+    <p class="small">อ่านข้อมูลได้ทุกคน · เพิ่มหรือแก้ไขต้องยืนยันรหัสทีมก่อน</p>
+    <label for="productApiUrl">Worker URL</label>
     <input id="productApiUrl" type="url" inputmode="url" placeholder="https://ชื่อ-worker.workers.dev">
-    <label for="productWriteCode">รหัสทีมสำหรับบันทึก/แก้ไข</label>
-    <input id="productWriteCode" type="password" autocomplete="off" placeholder="กรอกเมื่อต้องบันทึก">
-    <div class="actions" style="margin-top:10px"><button id="connectSharedProductDb" class="secondary" type="button">เชื่อมฐานข้อมูลทีม</button><button id="uploadPendingLocalProducts" class="secondary" type="button" hidden>ส่งสินค้าในเครื่องขึ้นฐานกลาง</button></div>
-    <button id="downloadLocalProductBackup" class="secondary" type="button" style="margin-top:8px">ส่งออก JSON สำรองฐานข้อมูล</button>
-    <p class="small" id="productCloudStatus" aria-live="polite">ยังไม่เชื่อมฐานข้อมูลร่วม</p>
+    <button id="connectSharedProductDb" class="secondary" type="button">1. เชื่อมต่อและโหลดสินค้า</button>
+    <p class="small" id="productCloudStatus" aria-live="polite">ยังไม่ได้เชื่อมต่อฐานกลาง</p>
+    <hr>
+    <label for="productWriteCode">รหัสทีมสำหรับเพิ่ม/แก้ไขสินค้า</label>
+    <input id="productWriteCode" type="password" autocomplete="off" placeholder="ใส่รหัสทีมที่ตั้งไว้ใน Cloudflare">
+    <button id="verifyProductWriteCode" class="secondary" type="button">2. ตรวจรหัสทีม</button>
+    <p class="small" id="productWriteStatus" aria-live="polite">ยังไม่ได้ตรวจรหัส · อ่านสินค้าได้อย่างเดียว</p>
+    <button id="uploadPendingLocalProducts" type="button" hidden>ส่งสินค้าในเครื่องขึ้นฐานกลาง</button>
+    <button id="downloadLocalProductBackup" class="secondary" type="button" style="margin-top:8px">ส่งออก JSON สำรองสินค้า</button>
   </div>
   <div id="productDbStatus" class="small" role="status" aria-live="polite">ข้อมูลเก็บในเครื่องนี้เท่านั้น</div>
   <div id="productImportReview" class="import-review" hidden>
@@ -215,33 +225,68 @@ function commitProductData(next,message){
   catch(e){$('productDbStatus').textContent='บันทึก Product DB ไม่สำเร็จ: '+e.message;throw e}
 }
 const PRODUCT_API_URL_KEY='cakeProductDbApiUrl',PRODUCT_PENDING_KEY='cakeProductDatabasePendingCloudV1';
-let productApiUrl='',productTeamCode=sessionStorage.getItem('cakeProductDbTeamCode')||'',sharedProductDbConnected=false;
+let productApiUrl='',productTeamCode=sessionStorage.getItem('cakeProductDbTeamCode')||'',sharedProductDbConnected=false,teamWriteVerified=false;
 function pendingCloudProducts(){try{return JSON.parse(localStorage.getItem(PRODUCT_PENDING_KEY)||'[]')}catch(e){return []}}
-function updatePendingCloudButton(){const n=pendingCloudProducts().length;$('uploadPendingLocalProducts').hidden=!n;$('uploadPendingLocalProducts').textContent='ส่งสินค้าในเครื่องขึ้นฐานกลาง ('+n+')'}
+function updatePendingCloudButton(){const n=pendingCloudProducts().length;$('uploadPendingLocalProducts').hidden=!n;$('uploadPendingLocalProducts').textContent='ส่งสินค้าในเครื่องขึ้นฐานกลาง ('+n+' รายการ)'}
 function cloudEndpoint(){if(!productApiUrl)throw new Error('กรุณากรอก Worker URL');const u=new URL(productApiUrl);if(u.protocol!=='https:')throw new Error('Worker URL ต้องเป็น HTTPS');return u.toString().replace(/\/$/,'')+'/products'}
-async function callProductApi(payload,write){
-  const headers={Accept:'application/json'};if(payload){headers['Content-Type']='application/json';if(write){if(!productTeamCode)throw new Error('กรุณากรอกรหัสทีมก่อนบันทึก');headers.Authorization='Bearer '+productTeamCode}}
+async function callProductApi(payload,write,teamCode=productTeamCode){
+  const headers={Accept:'application/json'};if(payload){headers['Content-Type']='application/json';if(write){if(!teamCode)throw new Error('กรุณาใส่รหัสทีมก่อน');headers.Authorization='Bearer '+teamCode}}
   let response;try{response=await fetch(cloudEndpoint(),{method:payload?'POST':'GET',headers,body:payload?JSON.stringify(payload):undefined,cache:'no-store'})}catch(e){throw new Error('ติดต่อฐานข้อมูลไม่ได้ ตรวจ URL, อินเทอร์เน็ต และ CORS ของ Worker')}
   let body;try{body=await response.json()}catch(e){throw new Error('Worker ตอบกลับไม่ใช่ JSON')}
   if(!response.ok)throw new Error(body.error||('Worker ตอบกลับ HTTP '+response.status));if(!body||!Array.isArray(body.products))throw new Error('ข้อมูลจากฐานกลางไม่ถูกต้อง');return body
 }
 function normalizeRemoteProducts(rows){const normalized=rows.map(normalizeProduct),seen=new Set();normalized.forEach(p=>{if(seen.has(p.barcode))throw new Error('ฐานกลางมี barcode ซ้ำ: '+p.barcode);seen.add(p.barcode)});return normalized}
+function productApiErrorMessage(error){
+  const message=error?.message||'เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ';
+  if(message==='Invalid team write code')return 'รหัสทีมไม่ถูกต้อง · ตรวจให้ตรงกับ Secret TEAM_WRITE_CODE ใน Cloudflare';
+  if(message==='Worker secrets are not configured')return 'Worker ยังตั้งค่า Secret ไม่ครบ · ต้องมี GITHUB_TOKEN และ TEAM_WRITE_CODE';
+  return message;
+}
+function setProductWriteStatus(message,state=''){
+  $('productWriteStatus').textContent=message;
+  $('productWriteStatus').dataset.state=state;
+}
 async function connectSharedProductDb(){
-  productApiUrl=$('productApiUrl').value.trim();productTeamCode=$('productWriteCode').value.trim()||sessionStorage.getItem('cakeProductDbTeamCode')||'';if(productTeamCode)sessionStorage.setItem('cakeProductDbTeamCode',productTeamCode);localStorage.setItem(PRODUCT_API_URL_KEY,productApiUrl);$('productCloudStatus').textContent='กำลังอ่านฐานข้อมูลสาธารณะ…';
+  productApiUrl=$('productApiUrl').value.trim();localStorage.setItem(PRODUCT_API_URL_KEY,productApiUrl);$('productCloudStatus').textContent='กำลังโหลดรายการสินค้า…';
   try{const remote=normalizeRemoteProducts((await callProductApi()).products),remoteCodes=new Set(remote.map(p=>p.barcode));
     const localOnly=products.filter(p=>!remoteCodes.has(p.barcode));if(localOnly.length)localStorage.setItem(PRODUCT_PENDING_KEY,JSON.stringify(localOnly));
     const conflicts=products.filter(p=>remoteCodes.has(p.barcode)&&JSON.stringify(p)!==JSON.stringify(remote.find(r=>r.barcode===p.barcode)));if(conflicts.length)localStorage.setItem('cakeProductDatabaseLocalBackupV1',JSON.stringify(conflicts));
-    products=persistProductData(remote);renderProductDatabase();sharedProductDbConnected=true;updatePendingCloudButton();$('productCloudStatus').textContent='เชื่อมแล้ว · ฐานกลาง '+remote.length+' รายการ'+(localOnly.length?' · มีข้อมูลในเครื่องรอส่ง '+localOnly.length+' รายการ':'');$('productDbStatus').textContent='กำลังใช้ Product DB ร่วมของทีม';
-  }catch(e){sharedProductDbConnected=false;$('productCloudStatus').textContent='เชื่อมไม่สำเร็จ: '+e.message;$('productDbStatus').textContent='ยังใช้ข้อมูลในเครื่อง · '+e.message}
+    products=persistProductData(remote);renderProductDatabase();sharedProductDbConnected=true;updatePendingCloudButton();$('productCloudStatus').textContent='โหลดฐานกลางแล้ว '+remote.length+' รายการ · การอ่านสำเร็จ แต่ยังไม่ยืนยันสิทธิ์เขียน';$('productDbStatus').textContent='กำลังใช้ Product DB ร่วมของทีม';
+  }catch(e){sharedProductDbConnected=false;teamWriteVerified=false;$('productCloudStatus').textContent='เชื่อมต่อไม่สำเร็จ: '+productApiErrorMessage(e);$('productDbStatus').textContent='ยังใช้ข้อมูลในเครื่อง · '+productApiErrorMessage(e)}
 }
-async function writeSharedProductDb(payload){const result=await callProductApi(payload,true);products=persistProductData(normalizeRemoteProducts(result.products));renderProductDatabase();return result}
-async function uploadPendingCloudProducts(){const pending=pendingCloudProducts();if(!pending.length)return;try{await writeSharedProductDb({action:'mergeMissing',products:pending});localStorage.removeItem(PRODUCT_PENDING_KEY);updatePendingCloudButton();$('productCloudStatus').textContent='ส่งข้อมูลขึ้นฐานกลางแล้ว · '+products.length+' รายการ'}catch(e){$('productCloudStatus').textContent='ส่งข้อมูลไม่สำเร็จ: '+e.message}}
+async function verifyProductWriteCode(){
+  productApiUrl=$('productApiUrl').value.trim();productTeamCode=$('productWriteCode').value.trim();
+  if(!productApiUrl){setProductWriteStatus('กรุณาใส่ Worker URL และเชื่อมต่อก่อน','error');return}
+  if(!sharedProductDbConnected)await connectSharedProductDb();
+  if(!sharedProductDbConnected){setProductWriteStatus('เชื่อมฐานกลางไม่สำเร็จ · ดูข้อความสถานะด้านบน','error');return}
+  if(!productTeamCode){setProductWriteStatus('กรุณาใส่รหัสทีมก่อน','error');return}
+  setProductWriteStatus('กำลังตรวจรหัสกับ Worker…');
+  try{
+    await callProductApi({action:'verify'},true,productTeamCode);
+    teamWriteVerified=true;sessionStorage.setItem('cakeProductDbTeamCode',productTeamCode);
+    setProductWriteStatus('รหัสทีมถูกต้อง · เพิ่ม แก้ไข และส่งสินค้าได้แล้ว','success');
+  }catch(e){
+    teamWriteVerified=false;sessionStorage.removeItem('cakeProductDbTeamCode');
+    setProductWriteStatus(productApiErrorMessage(e),'error');
+  }
+}
+async function writeSharedProductDb(payload){
+  if(!teamWriteVerified)throw new Error('กรุณากด “ตรวจรหัสทีม” ก่อนบันทึก');
+  const result=await callProductApi(payload,true);
+  products=persistProductData(normalizeRemoteProducts(result.products));renderProductDatabase();return result
+}
+async function uploadPendingCloudProducts(){
+  const pending=pendingCloudProducts();if(!pending.length)return;
+  if(!teamWriteVerified){setProductWriteStatus('ตรวจรหัสทีมก่อน แล้วจึงส่งสินค้าได้','error');return}
+  try{await writeSharedProductDb({action:'mergeMissing',products:pending});localStorage.removeItem(PRODUCT_PENDING_KEY);updatePendingCloudButton();$('productCloudStatus').textContent='ส่งสินค้าเรียบร้อย · ฐานกลางมี '+products.length+' รายการ';setProductWriteStatus('อัปโหลดสินค้าจากเครื่องนี้สำเร็จ','success')}
+  catch(e){$('productCloudStatus').textContent='ส่งข้อมูลไม่สำเร็จ: '+productApiErrorMessage(e);setProductWriteStatus(productApiErrorMessage(e),'error')}
+}
 function initializeProductDatabase(){
   try{products=readProductData();$('productDbStatus').textContent=products.length?'กู้คืน Product DB จากเครื่องนี้แล้ว':'เก็บข้อมูลในเครื่องนี้เท่านั้น · ส่งออก JSON เพื่อสำรอง'}
   catch(e){products=[];$('productDbStatus').textContent='อ่าน Product DB เดิมไม่สำเร็จ: '+e.message+' · นำเข้าไฟล์สำรองเพื่อกู้คืนได้'}
   renderProductDatabase();updatePendingCloudButton();const saved=localStorage.getItem(PRODUCT_API_URL_KEY)||'';if(saved){$('productApiUrl').value=saved;productApiUrl=saved;connectSharedProductDb()}
 }
-$('connectSharedProductDb').onclick=connectSharedProductDb;$('uploadPendingLocalProducts').onclick=uploadPendingCloudProducts;
+$('connectSharedProductDb').onclick=connectSharedProductDb;$('verifyProductWriteCode').onclick=verifyProductWriteCode;$('productWriteCode').addEventListener('input',()=>{teamWriteVerified=false;productTeamCode='';sessionStorage.removeItem('cakeProductDbTeamCode');setProductWriteStatus('รหัสเปลี่ยนแล้ว · กด “ตรวจรหัสทีม” อีกครั้ง')});$('uploadPendingLocalProducts').onclick=uploadPendingCloudProducts;
 $('downloadLocalProductBackup').onclick=async()=>{
   try{
     const saved=[...pendingCloudProducts()];
@@ -284,9 +329,12 @@ function showProductLookup(barcode){
   $('category').value=purchaseCategory?purchaseCategory.value:'ยังไม่ทราบ / รอตรวจ';
 }
 function initializeProductDatabase(){
-  try{products=readProductData();$('productDbStatus').textContent=products.length?'กู้คืน Product DB จากเครื่องนี้แล้ว · ข้อมูลยังอยู่ใน localStorage ของเบราว์เซอร์นี้':'เก็บข้อมูลในเครื่องนี้เท่านั้น · ส่งออก JSON เพื่อสำรองหรือย้ายเครื่อง'}
+  try{products=readProductData();$('productDbStatus').textContent=products.length?'กู้คืน Product DB จากเครื่องนี้แล้ว':'เก็บข้อมูลในเครื่องนี้เท่านั้น · ส่งออก JSON เพื่อสำรอง'}
   catch(e){products=[];$('productDbStatus').textContent='อ่าน Product DB เดิมไม่สำเร็จ: '+e.message+' · นำเข้าไฟล์สำรองเพื่อกู้คืนได้'}
-  renderProductDatabase();
+  productTeamCode=sessionStorage.getItem('cakeProductDbTeamCode')||'';$('productWriteCode').value=productTeamCode;
+  renderProductDatabase();updatePendingCloudButton();
+  const saved=localStorage.getItem(PRODUCT_API_URL_KEY)||'';
+  if(saved){$('productApiUrl').value=saved;productApiUrl=saved;connectSharedProductDb().then(()=>{if(sharedProductDbConnected&&productTeamCode)verifyProductWriteCode()})}
 }
 $('productSearch').addEventListener('input',renderProductDatabase);
 $('productList').addEventListener('click',event=>{
@@ -309,7 +357,7 @@ $('saveProduct').onclick=async()=>{
     editingProductBarcode=null;
     showProductLookup(nextProduct.barcode);
     $('productDbStatus').textContent='บันทึกแล้ว: '+nextProduct.name+' ('+nextProduct.barcode+')';
-  }catch(e){$('productFormStatus').textContent=e.message}
+  }catch(e){$('productFormStatus').textContent=productApiErrorMessage(e)}
 };
 $('cancelProduct').onclick=()=>{$('productEditor').hidden=true;editingProductBarcode=null};
 $('lookupProduct').onclick=()=>showProductLookup($('barcode').value);

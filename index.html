@@ -281,11 +281,6 @@ async function uploadPendingCloudProducts(){
   try{await writeSharedProductDb({action:'mergeMissing',products:pending});localStorage.removeItem(PRODUCT_PENDING_KEY);updatePendingCloudButton();$('productCloudStatus').textContent='ส่งสินค้าเรียบร้อย · ฐานกลางมี '+products.length+' รายการ';setProductWriteStatus('อัปโหลดสินค้าจากเครื่องนี้สำเร็จ','success')}
   catch(e){$('productCloudStatus').textContent='ส่งข้อมูลไม่สำเร็จ: '+productApiErrorMessage(e);setProductWriteStatus(productApiErrorMessage(e),'error')}
 }
-function initializeProductDatabase(){
-  try{products=readProductData();$('productDbStatus').textContent=products.length?'กู้คืน Product DB จากเครื่องนี้แล้ว':'เก็บข้อมูลในเครื่องนี้เท่านั้น · ส่งออก JSON เพื่อสำรอง'}
-  catch(e){products=[];$('productDbStatus').textContent='อ่าน Product DB เดิมไม่สำเร็จ: '+e.message+' · นำเข้าไฟล์สำรองเพื่อกู้คืนได้'}
-  renderProductDatabase();updatePendingCloudButton();const saved=localStorage.getItem(PRODUCT_API_URL_KEY)||'';if(saved){$('productApiUrl').value=saved;productApiUrl=saved;connectSharedProductDb()}
-}
 $('connectSharedProductDb').onclick=connectSharedProductDb;$('verifyProductWriteCode').onclick=verifyProductWriteCode;$('productWriteCode').addEventListener('input',()=>{teamWriteVerified=false;productTeamCode='';sessionStorage.removeItem('cakeProductDbTeamCode');setProductWriteStatus('รหัสเปลี่ยนแล้ว · กด “ตรวจรหัสทีม” อีกครั้ง')});$('uploadPendingLocalProducts').onclick=uploadPendingCloudProducts;
 $('downloadLocalProductBackup').onclick=async()=>{
   try{

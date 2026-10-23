@@ -64,18 +64,18 @@ export default {
       try { body = JSON.parse(bodyText); }
       catch { return json({ error: "Request body must be valid JSON" }, 400, cors); }
 
-      if (body?.action === "verify") {
-        const snapshot = await readCatalog(env);
-        return json({ verified: true, ...snapshot.catalog }, 200, { ...cors, "Cache-Control": "no-store" });
-      }
-
       const clientIp = request.headers.get("CF-Connecting-IP") || "unknown";
       const { success } = await env.TEAM_WRITE_LIMITER.limit({ key: clientIp });
       if (!success) {
-        return json({ error: "Too many writes. Try again in a minute." }, 429, {
+        return json({ error: "Too many authorized requests. Try again in a minute." }, 429, {
           ...cors,
           "Retry-After": "60"
         });
+      }
+
+      if (body?.action === "verify") {
+        const snapshot = await readCatalog(env);
+        return json({ verified: true, ...snapshot.catalog }, 200, { ...cors, "Cache-Control": "no-store" });
       }
 
       const result = await mutateCatalog(env, body);

@@ -69,6 +69,15 @@ export default {
         return json({ verified: true, ...snapshot.catalog }, 200, { ...cors, "Cache-Control": "no-store" });
       }
 
+      const clientIp = request.headers.get("CF-Connecting-IP") || "unknown";
+      const { success } = await env.TEAM_WRITE_LIMITER.limit({ key: clientIp });
+      if (!success) {
+        return json({ error: "Too many writes. Try again in a minute." }, 429, {
+          ...cors,
+          "Retry-After": "60"
+        });
+      }
+
       const result = await mutateCatalog(env, body);
       return json(result, 200, { ...cors, "Cache-Control": "no-store" });
     } catch (error) {

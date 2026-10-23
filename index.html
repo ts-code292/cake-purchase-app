@@ -4,6 +4,18 @@
 :root{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display","Helvetica Neue",system-ui,sans-serif;color:#1c1c1e;background:#f2f2f7;--blue:#007aff;--line:#e5e5ea;--muted:#8e8e93}
 *{box-sizing:border-box}
 body{margin:0;background:#f2f2f7;padding-bottom:calc(22px + env(safe-area-inset-bottom))}
+.access-gate{min-height:100vh;min-height:100dvh;display:grid;place-items:center;padding:24px;background:#f2f2f7}[hidden]{display:none!important}
+.access-card{width:min(100%,420px);padding:24px;background:#fff;border-radius:18px;box-shadow:0 4px 24px rgba(0,0,0,.08)}
+.access-card h1{font-size:1.35rem;margin:0 0 8px}
+.access-card p{color:#6d6d72;line-height:1.5}
+.access-card button{width:100%;margin-top:12px}
+.app-header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.app-header>button{min-height:38px;padding:8px 12px}
+.main-nav{max-width:680px;margin:12px auto 0;padding:0 16px;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.main-nav button{background:#e5e5ea;color:#3a3a3c;padding:10px 8px}
+.main-nav button.active{background:#007aff;color:#fff}
+.screen{display:grid;gap:18px}
+@media(max-width:420px){.access-gate{padding:16px}.access-card{padding:20px}.main-nav{padding:0 12px;gap:7px}.main-nav button{font-size:.9rem}}
 header{background:rgba(242,242,247,.96);color:#1c1c1e;padding:calc(14px + env(safe-area-inset-top)) 20px 12px;position:sticky;top:0;z-index:5;border-bottom:1px solid rgba(60,60,67,.12);backdrop-filter:blur(18px)}
 header h1{font-size:1.35rem;letter-spacing:-.025em;font-weight:750;margin:0 0 3px}
 header p{margin:0;color:var(--muted);font-size:.82rem}
@@ -31,7 +43,7 @@ button.danger{background:#fff0f0;color:#c62828;border:0}
 #receiptPreview img{width:76px;height:76px;object-fit:cover;border-radius:11px;border:1px solid var(--line)}
 #scanner{display:none;width:100%;border-radius:12px;margin-top:10px;background:#111}
 footer{font-size:.76rem;color:#8e8e93;text-align:center;padding:4px 18px 24px}
-@media(min-width:650px){main{grid-template-columns:1fr 1fr}.wide{grid-column:1/-1}}
+@media(min-width:650px){main{grid-template-columns:1fr 1fr}.wide{grid-column:1/-1}.screen{grid-template-columns:1fr 1fr}.screen>.wide{grid-column:1/-1}}
 @media(max-width:420px){main{padding:14px 12px;gap:14px}.card{padding:16px 14px}.row{gap:7px}.row button{padding:10px 12px;font-size:.88rem}}
 .product-editor,.import-review{margin-top:12px;padding:14px;background:#f4f8ff;border:1px solid #c7ddff;border-radius:13px}
 .product-editor h3{margin:0 0 8px;font-size:.95rem}
@@ -45,64 +57,111 @@ footer{font-size:.76rem;color:#8e8e93;text-align:center;padding:4px 18px 24px}
 #productLookupResult{margin-top:8px;line-height:1.5}
 #productLookupResult button{min-height:38px;padding:7px 12px;margin-top:6px}
 @media(max-width:420px){.product-editor,.import-review{padding:12px}.product-row-actions button{flex:1}}
+.product-connection{background:#f4f8ff}
+.product-connection hr{border:0;border-top:1px solid #d9e5f5;margin:16px 0}
+.product-connection>button{width:100%;margin-top:8px}
+#productWriteStatus[data-state="success"]{color:#18794e}
+#productWriteStatus[data-state="error"]{color:#b42318}
 
 .privacy-note{margin:12px 14px 0;padding:13px 15px;background:#fff;border:1px solid #d1d1d6;border-radius:14px;font-size:.85rem;line-height:1.45;color:#3a3a3c}
 .privacy-note p{margin:6px 0 0}
 .privacy-warning{color:#8a4b00;font-size:.78rem}
 </style></head><body>
-<header><h1>บันทึกรอบซื้อ</h1><p>Cake Stock <span aria-hidden="true">·</span> เชียงใหม่</p></header>
+<div id="accessGate" class="access-gate">
+  <section class="access-card">
+    <h1>เข้าสู่ระบบร้าน</h1>
+    <p>ใส่รหัสทีมเพื่อเปิดเมนูสแกนสินค้าและบันทึกรอบซื้อ</p>
+    <label for="teamAccessCode">รหัสทีม</label>
+    <input id="teamAccessCode" type="password" autocomplete="off" placeholder="กรอกรหัสทีม">
+    <button id="enterApp" type="button">ตรวจรหัสและเข้าแอป</button>
+    <p id="accessStatus" class="small" role="status" aria-live="polite">ผู้ที่ไม่มีรหัสทีมจะเข้าใช้งานแอปไม่ได้</p>
+  </section>
+</div>
+<div id="appShell" hidden>
+<header><div class="app-header"><div><h1>บันทึกรอบซื้อ</h1><p>Cake Stock <span aria-hidden="true">·</span> เชียงใหม่</p></div><button id="logoutApp" class="secondary" type="button">ออกจากระบบ</button></div></header>
 <div class="privacy-note" role="note">
   <strong>Product DB ใช้ร่วมกันได้ · ข้อมูลสินค้าอ่านได้สาธารณะ</strong>
   <p>ฐานข้อมูลสินค้า (barcode, ชื่อ, แบรนด์, ขนาดแพ็ก, หน่วย และหมวดหมู่) เก็บในไฟล์สาธารณะบน GitHub เพื่อให้ทุกเครื่องอ่านร่วมกันได้ ห้ามใส่ราคา ต้นทุน สต็อก หรือข้อมูลส่วนบุคคล</p>
-  <p>การเพิ่ม แก้ไข และลบสินค้าใช้รหัสทีมผ่าน Worker ส่วนฉบับร่างรอบซื้อและรูปใบเสร็จยังเก็บในเบราว์เซอร์เครื่องนี้ และต้องส่งออกเพื่อย้ายเครื่อง</p>
+  <p>รหัสทีมใช้ผ่าน Worker เพื่อเข้าแอปและบันทึก Product DB ส่วนฉบับร่างรอบซื้อและรูปใบเสร็จเก็บในเบราว์เซอร์เครื่องนี้</p>
 </div>
+<nav id="mainNav" class="main-nav" aria-label="เมนูหลัก">
+  <button type="button" class="active" data-screen-target="productScreen" aria-pressed="true">สแกน / จัดการสินค้า</button>
+  <button type="button" data-screen-target="purchaseScreen" aria-pressed="false">บันทึกรอบซื้อ</button>
+</nav>
 <main>
-<section class="card"><h2>1) รอบซื้อ</h2><label>ร้านค้า</label><input id="shop" placeholder="ชื่อร้าน / ผู้ขาย"><label>วันที่ซื้อ</label><input id="date" type="datetime-local"><label>หมายเหตุ (ถ้ามี)</label><input id="note" placeholder="เช่น ซื้อรอบเช้า"><div class="small" style="margin-top:8px">เลขรอบซื้อ: <strong id="sessionId"></strong></div></section>
-<section class="card"><h2>2) เพิ่มสินค้า</h2><label>บาร์โค้ด</label><div class="row"><input id="barcode" inputmode="numeric" placeholder="สแกนหรือพิมพ์บาร์โค้ด"><button id="scanBtn" class="secondary" type="button">เปิดกล้อง</button></div><video id="scanner" autoplay muted playsinline></video><div class="small" id="scanStatus" aria-live="polite">ใช้กล้องหลังสแกนบาร์โค้ด · ต้องเปิด HTTPS และอนุญาตกล้อง</div>
-<div class="small" id="productLookupResult" aria-live="polite"></div>
-<div id="productEditor" class="product-editor" hidden>
-  <h3 id="productEditorTitle">เพิ่มสินค้าในฐานข้อมูล</h3>
-  <label>บาร์โค้ด</label><input id="productBarcode" inputmode="numeric" autocomplete="off">
-  <label>ชื่อสินค้า</label><input id="productName" placeholder="เช่น แป้งเค้กตรา...">
-  <label>แบรนด์</label><input id="productBrand" placeholder="ระบุถ้ามี">
-  <div class="row"><div><label>ขนาดแพ็ก</label><input id="productPackSize" placeholder="เช่น 1"></div><div><label>หน่วย</label><input id="productUnit" placeholder="กก. / ลิตร / ใบ"></div></div>
-  <label>หมวดหมู่</label><input id="productCategory" list="productCategories" placeholder="เช่น วัตถุดิบ"><datalist id="productCategories"><option value="วัตถุดิบ"><option value="บรรจุภัณฑ์"><option value="ของใช้ร้าน"><option value="เครื่องดื่ม"><option value="อื่น ๆ"></datalist>
-  <div class="actions" style="margin-top:12px"><button id="saveProduct" type="button">บันทึกสินค้า</button><button id="cancelProduct" class="secondary" type="button">ยกเลิก</button></div>
-  <p class="small" id="productFormStatus" aria-live="polite"></p>
-</div>
-<div class="small" style="margin-top:10px"><button id="lookupProduct" class="secondary" type="button">ค้นหา barcode ใน Product DB</button></div><label>ชื่อสินค้า / วัตถุดิบ</label><input id="name" placeholder="เช่น แป้งเค้ก หรือกล่องเค้ก S"><div class="row"><div><label>ขนาดแพ็ก</label><input id="packSize" placeholder="เช่น 1"></div><div><label>หน่วย</label><input id="unit" placeholder="กก. / ลิตร / ใบ"></div><div><label>จำนวนแพ็ก</label><input id="qty" type="number" min="0.01" step="any" placeholder="0"></div></div><label>ประเภท</label><select id="category"><option>วัตถุดิบ</option><option>ของใช้ร้าน (ติดตามสต็อก)</option><option>ไม่ติดตามสต็อก</option><option>ยังไม่ทราบ / รอตรวจ</option></select><button id="addItem" style="width:100%;margin-top:12px">เพิ่มรายการในรอบซื้อ</button></section>
-<section class="card wide" id="productDatabase">
-  <h2>3) Product DB <span class="pill" id="productCount">0 รายการ</span></h2>
-  <label for="productSearch">ค้นหาสินค้า (ชื่อ, แบรนด์, barcode หรือหมวดหมู่)</label>
-  <input id="productSearch" type="search" placeholder="พิมพ์เพื่อค้นหา">
-  <div class="actions" style="margin-top:12px">
-    <button id="exportProductDb" class="secondary" type="button">ส่งออก Product DB (JSON)</button>
-    <button id="chooseProductImport" class="secondary" type="button">นำเข้า / กู้คืน JSON</button>
-  </div>
-  <input id="productImportFile" type="file" accept="application/json,.json" hidden>
-  <div class="product-editor">
-    <h3>ฐานข้อมูลร่วมของทีม</h3>
-    <label for="productApiUrl">Worker URL (อ่านฐานข้อมูลสาธารณะ)</label>
-    <input id="productApiUrl" type="url" inputmode="url" placeholder="https://ชื่อ-worker.workers.dev">
-    <label for="productWriteCode">รหัสทีมสำหรับบันทึก/แก้ไข</label>
-    <input id="productWriteCode" type="password" autocomplete="off" placeholder="กรอกเมื่อต้องบันทึก">
-    <div class="actions" style="margin-top:10px"><button id="connectSharedProductDb" class="secondary" type="button">เชื่อมฐานข้อมูลทีม</button><button id="uploadPendingLocalProducts" class="secondary" type="button" hidden>ส่งสินค้าในเครื่องขึ้นฐานกลาง</button></div>
-    <button id="downloadLocalProductBackup" class="secondary" type="button" style="margin-top:8px">ส่งออก JSON สำรองฐานข้อมูล</button>
-    <p class="small" id="productCloudStatus" aria-live="polite">ยังไม่เชื่อมฐานข้อมูลร่วม</p>
-  </div>
-  <div id="productDbStatus" class="small" role="status" aria-live="polite">ข้อมูลเก็บในเครื่องนี้เท่านั้น</div>
-  <div id="productImportReview" class="import-review" hidden>
-    <p id="productImportSummary" class="small"></p>
-    <p class="small"><b>รวม/อัปเดต</b> จะเพิ่มสินค้าใหม่และเขียนทับ barcode ที่ซ้ำกับข้อมูลเดิม · <b>แทนที่ทั้งหมด</b> จะลบข้อมูลเดิมในเครื่องแล้วใช้ไฟล์นี้แทน</p>
-    <div class="actions"><button id="mergeProductImport" type="button">รวม / อัปเดต</button><button id="replaceProductImport" class="danger" type="button">แทนที่ DB ทั้งหมด</button></div>
-    <button id="cancelProductImport" class="secondary" type="button" style="margin-top:8px">ยกเลิกนำเข้า</button>
-  </div>
-  <div id="productList" class="product-list"><p class="small">ยังไม่มีสินค้าในฐานข้อมูล</p></div>
+<section class="screen" id="productScreen">
+  <section class="card">
+    <h2>สแกนหรือค้นหาสินค้า</h2>
+    <label for="barcode">บาร์โค้ด</label>
+    <div class="row"><input id="barcode" inputmode="numeric" placeholder="สแกนหรือพิมพ์บาร์โค้ด"><button id="scanBtn" class="secondary" type="button">เปิดกล้อง</button></div>
+    <video id="scanner" autoplay muted playsinline></video>
+    <div class="small" id="scanStatus" aria-live="polite">ใช้กล้องหลังสแกนบาร์โค้ด · ต้องเปิด HTTPS และอนุญาตกล้อง</div>
+    <button id="lookupProduct" class="secondary" type="button" style="margin-top:10px">ค้นหาบาร์โค้ด</button>
+    <div class="small" id="productLookupResult" aria-live="polite"></div>
+    <div id="productEditor" class="product-editor" hidden>
+      <h3 id="productEditorTitle">เพิ่มสินค้าในฐานข้อมูล</h3>
+      <label for="productBarcode">บาร์โค้ด</label><input id="productBarcode" inputmode="numeric" autocomplete="off">
+      <label for="productName">ชื่อสินค้า</label><input id="productName" placeholder="เช่น แป้งเค้กตรา...">
+      <label for="productBrand">แบรนด์</label><input id="productBrand" placeholder="ระบุถ้ามี">
+      <div class="row"><div><label for="productPackSize">ขนาดแพ็ก</label><input id="productPackSize" placeholder="เช่น 1"></div><div><label for="productUnit">หน่วย</label><input id="productUnit" placeholder="กก. / ลิตร / ใบ"></div></div>
+      <label for="productCategory">หมวดหมู่</label><input id="productCategory" list="productCategories" placeholder="เช่น วัตถุดิบ"><datalist id="productCategories"><option value="วัตถุดิบ"><option value="บรรจุภัณฑ์"><option value="ของใช้ร้าน"><option value="เครื่องดื่ม"><option value="อื่น ๆ"></datalist>
+      <div class="actions" style="margin-top:12px"><button id="saveProduct" type="button">บันทึกสินค้าในฐานกลาง</button><button id="cancelProduct" class="secondary" type="button">ยกเลิก</button></div>
+      <p class="small" id="productFormStatus" aria-live="polite"></p>
+    </div>
+  </section>
+  <section class="card wide" id="productDatabase">
+    <h2>รายการสินค้า <span class="pill" id="productCount">0 รายการ</span></h2>
+    <label for="productSearch">ค้นหาชื่อ, แบรนด์, barcode หรือหมวดหมู่</label>
+    <input id="productSearch" type="search" placeholder="พิมพ์เพื่อค้นหา">
+    <div class="actions" style="margin-top:12px">
+      <button id="exportProductDb" class="secondary" type="button">ส่งออก Product DB (JSON)</button>
+      <button id="chooseProductImport" class="secondary" type="button">นำเข้า / กู้คืน JSON</button>
+    </div>
+    <input id="productImportFile" type="file" accept="application/json,.json" hidden>
+    <div class="product-editor product-connection">
+      <h3>ฐานข้อมูลสินค้าของทีม</h3>
+      <p class="small">เข้าสู่ระบบด้วยรหัสทีมแล้ว · เพิ่ม/แก้ไขได้ในเมนูนี้</p>
+      <label for="productApiUrl">Worker URL</label>
+      <input id="productApiUrl" type="url" inputmode="url" readonly aria-label="Worker URL ฐานสินค้าของร้าน">
+      <button id="connectSharedProductDb" class="secondary" type="button">โหลด / รีเฟรชฐานสินค้า</button>
+      <p class="small" id="productCloudStatus" aria-live="polite">กำลังเชื่อมฐานกลาง…</p>
+      <button id="uploadPendingLocalProducts" type="button" hidden>ส่งสินค้าในเครื่องขึ้นฐานกลาง</button>
+      <button id="downloadLocalProductBackup" class="secondary" type="button" style="margin-top:8px">ส่งออก JSON สำรองสินค้า</button>
+    </div>
+    <div id="productDbStatus" class="small" role="status" aria-live="polite">กำลังโหลดข้อมูลสินค้า</div>
+    <div id="productImportReview" class="import-review" hidden>
+      <p id="productImportSummary" class="small"></p>
+      <p class="small"><b>รวม/อัปเดต</b> จะเพิ่มสินค้าใหม่และเขียนทับ barcode ที่ซ้ำกับข้อมูลเดิม · <b>แทนที่ทั้งหมด</b> จะลบข้อมูลเดิมในเครื่องแล้วใช้ไฟล์นี้แทน</p>
+      <div class="actions"><button id="mergeProductImport" type="button">รวม / อัปเดต</button><button id="replaceProductImport" class="danger" type="button">แทนที่ DB ทั้งหมด</button></div>
+      <button id="cancelProductImport" class="secondary" type="button" style="margin-top:8px">ยกเลิกนำเข้า</button>
+    </div>
+    <div id="productList" class="product-list"><p class="small">กำลังโหลดสินค้า…</p></div>
+  </section>
 </section>
-<section class="card wide"><h2>4) รายการที่บันทึก <span class="pill" id="count">0 รายการ</span></h2><div id="items"><p class="small">ยังไม่มีรายการ เพิ่มสินค้าจากส่วนด้านบน</p></div></section>
-<section class="card"><h2>5) ใบเสร็จ</h2><label>ถ่ายรูปหรือเลือกรูปใบเสร็จ (แนบได้หลายรูป)</label><input id="receipts" type="file" accept="image/*" capture="environment" multiple><div id="receiptPreview"></div><p class="small">รูปจะรวมอยู่ในไฟล์ส่งออกของรอบซื้อ (อาจทำให้ไฟล์มีขนาดใหญ่)</p></section>
-<section class="card"><h2>6) บันทึกและส่งต่อ</h2><div class="actions"><button id="saveDraft" class="secondary">เก็บฉบับร่างในเครื่อง</button><button id="export">ส่งออกชุดข้อมูล</button></div><p class="small" id="status" aria-live="polite">ยังไม่ได้ส่งออก · ยังไม่เชื่อม Google Drive หรือฐานข้อมูลกรุงเทพฯ</p></section>
-</main><footer>ต้นแบบ MVP · สต็อกจะยังไม่เพิ่มจนกว่ากรุงเทพฯ จะตรวจและยืนยัน</footer>
+<section class="screen" id="purchaseScreen" hidden>
+  <section class="card">
+    <h2>ข้อมูลรอบซื้อ</h2>
+    <label for="shop">ร้านค้า</label><input id="shop" placeholder="ชื่อร้าน / ผู้ขาย">
+    <label for="date">วันที่ซื้อ</label><input id="date" type="datetime-local">
+    <label for="note">หมายเหตุ (ถ้ามี)</label><input id="note" placeholder="เช่น ซื้อรอบเช้า">
+    <div class="small" style="margin-top:8px">เลขรอบซื้อ: <strong id="sessionId"></strong></div>
+  </section>
+  <section class="card">
+    <h2>เพิ่มรายการซื้อ</h2>
+    <p class="small" id="selectedProductSummary">เลือกสินค้าจากเมนู “สแกน / จัดการสินค้า” หรือกรอกชื่อเอง</p>
+    <button id="chooseProductForPurchase" class="secondary" type="button">เลือก / สแกนสินค้า</button>
+    <label for="name">ชื่อสินค้า / วัตถุดิบ</label><input id="name" placeholder="เช่น แป้งเค้ก หรือกล่องเค้ก S">
+    <div class="row"><div><label for="packSize">ขนาดแพ็ก</label><input id="packSize" placeholder="เช่น 1"></div><div><label for="unit">หน่วย</label><input id="unit" placeholder="กก. / ลิตร / ใบ"></div><div><label for="qty">จำนวนแพ็ก</label><input id="qty" type="number" min="0.01" step="any" placeholder="0"></div></div>
+    <label for="category">ประเภท</label><select id="category"><option>วัตถุดิบ</option><option>ของใช้ร้าน (ติดตามสต็อก)</option><option>ไม่ติดตามสต็อก</option><option>ยังไม่ทราบ / รอตรวจ</option></select>
+    <button id="addItem" style="width:100%;margin-top:12px" type="button">เพิ่มรายการในรอบซื้อ</button>
+  </section>
+  <section class="card wide"><h2>รายการที่บันทึก <span class="pill" id="count">0 รายการ</span></h2><div id="items"><p class="small">ยังไม่มีรายการ เพิ่มสินค้าจากส่วนด้านบน</p></div></section>
+  <section class="card"><h2>ใบเสร็จ</h2><label for="receipts">ถ่ายรูปหรือเลือกรูปใบเสร็จ (แนบได้หลายรูป)</label><input id="receipts" type="file" accept="image/*" capture="environment" multiple><div id="receiptPreview"></div><p class="small">รูปจะรวมอยู่ในไฟล์ส่งออกของรอบซื้อ (อาจทำให้ไฟล์มีขนาดใหญ่)</p></section>
+  <section class="card"><h2>บันทึกและส่งต่อ</h2><div class="actions"><button id="saveDraft" class="secondary">เก็บฉบับร่างในเครื่อง</button><button id="export">ส่งออกชุดข้อมูล</button></div><p class="small" id="status" aria-live="polite">ยังไม่ได้ส่งออก · ฉบับร่างเก็บเฉพาะในเครื่องนี้</p></section>
+</section>
+</main>
+<footer>ต้นแบบ MVP · สต็อกจะยังไม่เพิ่มจนกว่ากรุงเทพฯ จะตรวจและยืนยัน</footer>
+</div>
 <script>
 function retryZxingCdn(script){
   script.onerror=null;
@@ -117,7 +176,8 @@ const now=new Date();now.setMinutes(now.getMinutes()-now.getTimezoneOffset());$(
 function newId(){return 'CM-'+new Date().toISOString().replace(/[-:TZ.]/g,'').slice(0,14)+'-'+Math.random().toString(36).slice(2,6).toUpperCase()}let sessionId=newId();$('sessionId').textContent=sessionId;
 function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function render(){$('count').textContent=items.length+' รายการ';$('items').innerHTML=items.length?items.map((x,i)=>`<div class="item"><div><strong>${esc(x.name||'สินค้ายังไม่ทราบชื่อ')}</strong><div class="meta">บาร์โค้ด: ${esc(x.barcode||'—')} · ${esc(x.category)}</div><div class="meta">แพ็กละ ${esc(x.packSize)} ${esc(x.unit)} × ${x.qty} แพ็ก</div></div><button class="danger" data-del="${i}">ลบ</button></div>`).join(''):'<p class="small">ยังไม่มีรายการ เพิ่มสินค้าจากส่วนด้านบน</p>';$('items').querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{items.splice(+b.dataset.del,1);render()})}
-$('addItem').onclick=()=>{const qty=Number($('qty').value),name=$('name').value.trim();if(!qty||qty<=0){alert('กรอกจำนวนแพ็กให้มากกว่า 0');return}if(!name&&!$('barcode').value.trim()){alert('กรอกชื่อสินค้าหรือบาร์โค้ด');return}items.push({barcode:$('barcode').value.trim(),name,packSize:$('packSize').value.trim(),unit:$('unit').value.trim(),qty,category:$('category').value});['barcode','name','packSize','unit','qty'].forEach(id=>$(id).value='');render()};
+$('addItem').onclick=()=>{const qty=Number($('qty').value),name=$('name').value.trim();if(!qty||qty<=0){alert('กรอกจำนวนแพ็กให้มากกว่า 0');return}if(!name){alert('กรอกชื่อสินค้าหรือเลือกสินค้าจากเมนูสแกน');return}items.push({barcode:$('barcode').value.trim(),name,packSize:$('packSize').value.trim(),unit:$('unit').value.trim(),qty,category:$('category').value});['barcode','name','packSize','unit','qty'].forEach(id=>$(id).value='');$('selectedProductSummary').textContent='เลือกรายการสินค้าจากเมนู “สแกน / จัดการสินค้า” หรือกรอกชื่อเอง';render()};
+$('chooseProductForPurchase').onclick=()=>{showMainScreen('productScreen');$('barcode').focus()};
 $('receipts').onchange=()=>{receiptFiles=Array.from($('receipts').files||[]);$('receiptPreview').innerHTML='';receiptFiles.forEach(f=>{const img=document.createElement('img');img.alt='ตัวอย่างใบเสร็จ';img.src=URL.createObjectURL(f);$('receiptPreview').appendChild(img)})};
 function payload(){return{schemaVersion:1,sessionId,shop:$('shop').value.trim(),purchasedAt:$('date').value,note:$('note').value.trim(),items,receiptCount:receiptFiles.length,workflowStatus:'pending_review',createdAt:new Date().toISOString()}}
 function fileAsData(f){return new Promise(resolve=>{const r=new FileReader();r.onload=()=>resolve({name:f.name,type:f.type,dataUrl:r.result});r.readAsDataURL(f)})}
@@ -142,7 +202,7 @@ async function restoreDraft(){
   }
   $('status').textContent='กู้คืนฉบับร่างจากเครื่องนี้แล้ว · ตรวจข้อมูลก่อนทำต่อ';
 }
-window.addEventListener('DOMContentLoaded',()=>{restoreDraft().catch(()=>{$('status').textContent='พบฉบับร่างแต่กู้คืนไม่ครบ · ตรวจพื้นที่เก็บของ Safari'})});
+
 
 $('export').onclick=async()=>{if(!items.length){alert('เพิ่มรายการซื้ออย่างน้อย 1 รายการก่อนส่งออก');return}const data={...payload(),receipts:await Promise.all(receiptFiles.map(fileAsData))};const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const filename=sessionId+'.json';try{const file=new File([blob],filename,{type:'application/json'});if(navigator.canShare&&navigator.canShare({files:[file]})&&navigator.share){await navigator.share({files:[file],title:'ชุดข้อมูลรอบซื้อ'});$('status').textContent='เปิดเมนูแชร์แล้ว · เลือก Drive หรือบันทึกลง Files เพื่อส่งให้กรุงเทพฯ';return}}catch(err){if(err&&err.name==='AbortError'){$('status').textContent='ยกเลิกการแชร์';return}}const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(url),1500);$('status').textContent='ดาวน์โหลดไฟล์รอบซื้อแล้ว · เปิดเมนูแชร์ของ iPhone หรือแอป Files แล้วอัปโหลดไปยังโฟลเดอร์ Google Drive ของร้าน'};
 
@@ -215,31 +275,55 @@ function commitProductData(next,message){
   catch(e){$('productDbStatus').textContent='บันทึก Product DB ไม่สำเร็จ: '+e.message;throw e}
 }
 const PRODUCT_API_URL_KEY='cakeProductDbApiUrl',PRODUCT_PENDING_KEY='cakeProductDatabasePendingCloudV1';
-let productApiUrl='',productTeamCode=sessionStorage.getItem('cakeProductDbTeamCode')||'',sharedProductDbConnected=false;
+const DEFAULT_PRODUCT_API_URL='https://cake-products-api.techinsaihaikham.workers.dev';
+let productApiUrl=localStorage.getItem('cakeProductDbApiUrl')||DEFAULT_PRODUCT_API_URL,productTeamCode=sessionStorage.getItem('cakeProductDbTeamCode')||'',sharedProductDbConnected=false,teamWriteVerified=false;
 function pendingCloudProducts(){try{return JSON.parse(localStorage.getItem(PRODUCT_PENDING_KEY)||'[]')}catch(e){return []}}
-function updatePendingCloudButton(){const n=pendingCloudProducts().length;$('uploadPendingLocalProducts').hidden=!n;$('uploadPendingLocalProducts').textContent='ส่งสินค้าในเครื่องขึ้นฐานกลาง ('+n+')'}
+function updatePendingCloudButton(){const n=pendingCloudProducts().length;$('uploadPendingLocalProducts').hidden=!n;$('uploadPendingLocalProducts').textContent='ส่งสินค้าในเครื่องขึ้นฐานกลาง ('+n+' รายการ)'}
 function cloudEndpoint(){if(!productApiUrl)throw new Error('กรุณากรอก Worker URL');const u=new URL(productApiUrl);if(u.protocol!=='https:')throw new Error('Worker URL ต้องเป็น HTTPS');return u.toString().replace(/\/$/,'')+'/products'}
-async function callProductApi(payload,write){
-  const headers={Accept:'application/json'};if(payload){headers['Content-Type']='application/json';if(write){if(!productTeamCode)throw new Error('กรุณากรอกรหัสทีมก่อนบันทึก');headers.Authorization='Bearer '+productTeamCode}}
+async function callProductApi(payload,write,teamCode=productTeamCode){
+  const headers={Accept:'application/json'};if(payload){headers['Content-Type']='application/json';if(write){if(!teamCode)throw new Error('กรุณาใส่รหัสทีมก่อน');headers.Authorization='Bearer '+teamCode}}
   let response;try{response=await fetch(cloudEndpoint(),{method:payload?'POST':'GET',headers,body:payload?JSON.stringify(payload):undefined,cache:'no-store'})}catch(e){throw new Error('ติดต่อฐานข้อมูลไม่ได้ ตรวจ URL, อินเทอร์เน็ต และ CORS ของ Worker')}
   let body;try{body=await response.json()}catch(e){throw new Error('Worker ตอบกลับไม่ใช่ JSON')}
   if(!response.ok)throw new Error(body.error||('Worker ตอบกลับ HTTP '+response.status));if(!body||!Array.isArray(body.products))throw new Error('ข้อมูลจากฐานกลางไม่ถูกต้อง');return body
 }
 function normalizeRemoteProducts(rows){const normalized=rows.map(normalizeProduct),seen=new Set();normalized.forEach(p=>{if(seen.has(p.barcode))throw new Error('ฐานกลางมี barcode ซ้ำ: '+p.barcode);seen.add(p.barcode)});return normalized}
-async function connectSharedProductDb(){
-  productApiUrl=$('productApiUrl').value.trim();productTeamCode=$('productWriteCode').value.trim()||sessionStorage.getItem('cakeProductDbTeamCode')||'';if(productTeamCode)sessionStorage.setItem('cakeProductDbTeamCode',productTeamCode);localStorage.setItem(PRODUCT_API_URL_KEY,productApiUrl);$('productCloudStatus').textContent='กำลังอ่านฐานข้อมูลสาธารณะ…';
-  try{const remote=normalizeRemoteProducts((await callProductApi()).products),remoteCodes=new Set(remote.map(p=>p.barcode));
-    const localOnly=products.filter(p=>!remoteCodes.has(p.barcode));if(localOnly.length)localStorage.setItem(PRODUCT_PENDING_KEY,JSON.stringify(localOnly));
-    const conflicts=products.filter(p=>remoteCodes.has(p.barcode)&&JSON.stringify(p)!==JSON.stringify(remote.find(r=>r.barcode===p.barcode)));if(conflicts.length)localStorage.setItem('cakeProductDatabaseLocalBackupV1',JSON.stringify(conflicts));
-    products=persistProductData(remote);renderProductDatabase();sharedProductDbConnected=true;updatePendingCloudButton();$('productCloudStatus').textContent='เชื่อมแล้ว · ฐานกลาง '+remote.length+' รายการ'+(localOnly.length?' · มีข้อมูลในเครื่องรอส่ง '+localOnly.length+' รายการ':'');$('productDbStatus').textContent='กำลังใช้ Product DB ร่วมของทีม';
-  }catch(e){sharedProductDbConnected=false;$('productCloudStatus').textContent='เชื่อมไม่สำเร็จ: '+e.message;$('productDbStatus').textContent='ยังใช้ข้อมูลในเครื่อง · '+e.message}
+function productApiErrorMessage(error){
+  const message=error?.message||'เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ';
+  if(message==='Invalid team write code')return 'รหัสทีมไม่ถูกต้อง · ตรวจให้ตรงกับรหัสที่ตั้งไว้ใน Cloudflare';
+  if(message==='Worker secrets are not configured')return 'ระบบยังตั้งค่า Secret ไม่ครบ · แจ้งผู้ดูแลให้ตรวจ GITHUB_TOKEN และ TEAM_WRITE_CODE';
+  return message;
 }
-async function writeSharedProductDb(payload){const result=await callProductApi(payload,true);products=persistProductData(normalizeRemoteProducts(result.products));renderProductDatabase();return result}
-async function uploadPendingCloudProducts(){const pending=pendingCloudProducts();if(!pending.length)return;try{await writeSharedProductDb({action:'mergeMissing',products:pending});localStorage.removeItem(PRODUCT_PENDING_KEY);updatePendingCloudButton();$('productCloudStatus').textContent='ส่งข้อมูลขึ้นฐานกลางแล้ว · '+products.length+' รายการ'}catch(e){$('productCloudStatus').textContent='ส่งข้อมูลไม่สำเร็จ: '+e.message}}
-function initializeProductDatabase(){
-  try{products=readProductData();$('productDbStatus').textContent=products.length?'กู้คืน Product DB จากเครื่องนี้แล้ว':'เก็บข้อมูลในเครื่องนี้เท่านั้น · ส่งออก JSON เพื่อสำรอง'}
-  catch(e){products=[];$('productDbStatus').textContent='อ่าน Product DB เดิมไม่สำเร็จ: '+e.message+' · นำเข้าไฟล์สำรองเพื่อกู้คืนได้'}
-  renderProductDatabase();updatePendingCloudButton();const saved=localStorage.getItem(PRODUCT_API_URL_KEY)||'';if(saved){$('productApiUrl').value=saved;productApiUrl=saved;connectSharedProductDb()}
+async function connectSharedProductDb(){
+  productApiUrl=$('productApiUrl').value.trim()||DEFAULT_PRODUCT_API_URL;
+  $('productApiUrl').value=productApiUrl;localStorage.setItem(PRODUCT_API_URL_KEY,productApiUrl);
+  $('productCloudStatus').textContent='กำลังโหลดรายการสินค้า…';
+  try{
+    const remote=normalizeRemoteProducts((await callProductApi()).products),remoteCodes=new Set(remote.map(p=>p.barcode));
+    const localOnly=products.filter(p=>!remoteCodes.has(p.barcode));if(localOnly.length)localStorage.setItem(PRODUCT_PENDING_KEY,JSON.stringify(localOnly));
+    const conflicts=products.filter(p=>remoteCodes.has(p.barcode)&&JSON.stringify(p)!==JSON.stringify(remote.find(r=>r.barcode===p.barcode)));
+    if(conflicts.length)localStorage.setItem('cakeProductDatabaseLocalBackupV1',JSON.stringify(conflicts));
+    products=persistProductData(remote);renderProductDatabase();sharedProductDbConnected=true;updatePendingCloudButton();
+    $('productCloudStatus').textContent='โหลดฐานกลางแล้ว '+remote.length+' รายการ · เข้าสู่ระบบด้วยรหัสทีมแล้ว';
+    $('productDbStatus').textContent='กำลังใช้ Product DB ร่วมของทีม';
+  }catch(e){
+    sharedProductDbConnected=false;
+    $('productCloudStatus').textContent='โหลดฐานกลางไม่สำเร็จ: '+productApiErrorMessage(e);
+    $('productDbStatus').textContent='ตรวจ URL หรือการเชื่อมต่อ Worker · '+productApiErrorMessage(e);
+  }
+}
+async function writeSharedProductDb(payload){
+  if(!teamWriteVerified)throw new Error('กรุณาเข้าสู่ระบบด้วยรหัสทีมก่อนบันทึก');
+  const result=await callProductApi(payload,true);
+  products=persistProductData(normalizeRemoteProducts(result.products));renderProductDatabase();return result
+}
+async function uploadPendingCloudProducts(){
+  const pending=pendingCloudProducts();if(!pending.length)return;
+  if(!teamWriteVerified){$('productCloudStatus').textContent='ต้องเข้าสู่ระบบด้วยรหัสทีมก่อนส่งสินค้า';return}
+  try{
+    await writeSharedProductDb({action:'mergeMissing',products:pending});
+    localStorage.removeItem(PRODUCT_PENDING_KEY);updatePendingCloudButton();
+    $('productCloudStatus').textContent='ส่งสินค้าเรียบร้อย · ฐานกลางมี '+products.length+' รายการ';
+  }catch(e){$('productCloudStatus').textContent='ส่งข้อมูลไม่สำเร็จ: '+productApiErrorMessage(e)}
 }
 $('connectSharedProductDb').onclick=connectSharedProductDb;$('uploadPendingLocalProducts').onclick=uploadPendingCloudProducts;
 $('downloadLocalProductBackup').onclick=async()=>{
@@ -265,28 +349,37 @@ function openProductEditor(product=null,barcode=''){
   $('productFormStatus').textContent='';
   $('productEditor').hidden=false;
 }
+function selectScannedProductForPurchase(product){
+  $('barcode').value=product.barcode;
+  $('name').value=product.name;
+  $('packSize').value=product.packSize;
+  $('unit').value=product.unit;
+  const purchaseCategory=[...$('category').options].find(o=>o.textContent===product.category);
+  $('category').value=purchaseCategory?purchaseCategory.value:'ยังไม่ทราบ / รอตรวจ';
+  $('selectedProductSummary').textContent='เลือกแล้ว: '+product.name+' · barcode '+product.barcode;
+  showMainScreen('purchaseScreen');
+  $('qty').focus();
+}
 function showProductLookup(barcode){
   const clean=String(barcode||'').trim();
   if(!clean)return;
   const found=products.find(p=>p.barcode===clean);
   if(!found){
-    $('productLookupResult').textContent='ยังไม่มี barcode นี้ใน Product DB · กรอกข้อมูลด้านล่างเพื่อบันทึกสินค้าใหม่';
-    openProductEditor(null,clean);
-    return;
+    $('productLookupResult').textContent='ยังไม่มี barcode นี้ในฐานข้อมูล · กรอกข้อมูลด้านล่างเพื่อเพิ่มสินค้าใหม่';
+    openProductEditor(null,clean);return;
   }
   $('productEditor').hidden=true;
-  $('productLookupResult').innerHTML='<b>พบใน Product DB:</b> '+esc(found.name)+' · '+esc(found.brand||'ไม่ระบุแบรนด์')+' · แพ็ก '+esc(found.packSize||'—')+' '+esc(found.unit)+' · '+esc(found.category)+'<br><button class="secondary" id="editScannedProduct" type="button">แก้ไขข้อมูลสินค้านี้</button>';
+  $('productLookupResult').innerHTML='<b>พบสินค้า:</b> '+esc(found.name)+' · '+esc(found.brand||'ไม่ระบุแบรนด์')+' · แพ็ก '+esc(found.packSize||'—')+' '+esc(found.unit)+' · '+esc(found.category)+'<br><button class="secondary" id="editScannedProduct" type="button">แก้ไขข้อมูลสินค้า</button> <button id="addScannedProductToPurchase" type="button">เลือกไปบันทึกรอบซื้อ</button>';
   $('editScannedProduct').onclick=()=>openProductEditor(found);
-  $('name').value=found.name;
-  $('packSize').value=found.packSize;
-  $('unit').value=found.unit;
-  const purchaseCategory=[...$('category').options].find(o=>o.textContent===found.category);
-  $('category').value=purchaseCategory?purchaseCategory.value:'ยังไม่ทราบ / รอตรวจ';
+  $('addScannedProductToPurchase').onclick=()=>selectScannedProductForPurchase(found);
 }
 function initializeProductDatabase(){
-  try{products=readProductData();$('productDbStatus').textContent=products.length?'กู้คืน Product DB จากเครื่องนี้แล้ว · ข้อมูลยังอยู่ใน localStorage ของเบราว์เซอร์นี้':'เก็บข้อมูลในเครื่องนี้เท่านั้น · ส่งออก JSON เพื่อสำรองหรือย้ายเครื่อง'}
-  catch(e){products=[];$('productDbStatus').textContent='อ่าน Product DB เดิมไม่สำเร็จ: '+e.message+' · นำเข้าไฟล์สำรองเพื่อกู้คืนได้'}
-  renderProductDatabase();
+  try{products=readProductData();$('productDbStatus').textContent=products.length?'กู้คืนรายการสินค้าในเครื่องแล้ว':'ยังไม่มีสินค้าในเครื่อง'}
+  catch(e){products=[];$('productDbStatus').textContent='อ่านข้อมูลในเครื่องไม่ได้: '+e.message}
+  productTeamCode=sessionStorage.getItem('cakeProductDbTeamCode')||'';
+  productApiUrl=localStorage.getItem(PRODUCT_API_URL_KEY)||DEFAULT_PRODUCT_API_URL;
+  $('productApiUrl').value=productApiUrl;
+  renderProductDatabase();updatePendingCloudButton();connectSharedProductDb();
 }
 $('productSearch').addEventListener('input',renderProductDatabase);
 $('productList').addEventListener('click',event=>{
@@ -296,7 +389,7 @@ $('productList').addEventListener('click',event=>{
   if(!product)return;
   if(button.dataset.productAction==='edit')openProductEditor(product);
   if(button.dataset.productAction==='delete'&&confirm('ลบ '+product.name+' ('+product.barcode+') ออกจาก Product DB หรือไม่?')){
-    (async()=>{try{if(productApiUrl&&!sharedProductDbConnected)throw new Error('ยังไม่ได้เชื่อมฐานข้อมูลร่วม กรุณาเชื่อมต่อใหม่ก่อนบันทึก');if(sharedProductDbConnected){productTeamCode=$('productWriteCode').value.trim()||sessionStorage.getItem('cakeProductDbTeamCode')||'';if(productTeamCode)sessionStorage.setItem('cakeProductDbTeamCode',productTeamCode);await writeSharedProductDb({action:'delete',barcode:product.barcode})}else commitProductData(products.filter(p=>p.barcode!==product.barcode),'ลบสินค้าแล้ว');$('productDbStatus').textContent='ลบสินค้าแล้ว'}catch(e){$('productDbStatus').textContent='ลบไม่สำเร็จ: '+e.message}})();
+    (async()=>{try{if(productApiUrl&&!sharedProductDbConnected)throw new Error('ยังไม่ได้เชื่อมฐานข้อมูลร่วม กรุณาเชื่อมต่อใหม่ก่อนบันทึก');if(sharedProductDbConnected){productTeamCode=sessionStorage.getItem('cakeProductDbTeamCode')||'';await writeSharedProductDb({action:'delete',barcode:product.barcode})}else commitProductData(products.filter(p=>p.barcode!==product.barcode),'ลบสินค้าแล้ว');$('productDbStatus').textContent='ลบสินค้าแล้ว'}catch(e){$('productDbStatus').textContent='ลบไม่สำเร็จ: '+e.message}})();
   }
 });
 $('saveProduct').onclick=async()=>{
@@ -304,12 +397,12 @@ $('saveProduct').onclick=async()=>{
     const nextProduct=normalizeProduct({barcode:$('productBarcode').value,name:$('productName').value,brand:$('productBrand').value,packSize:$('productPackSize').value,unit:$('productUnit').value,category:$('productCategory').value});
     const next=products.filter(p=>p.barcode!==editingProductBarcode);
     if(next.some(p=>p.barcode===nextProduct.barcode))throw new Error('barcode นี้มีอยู่แล้ว กรุณาแก้ไขสินค้ารายการเดิมแทน');
-    if(productApiUrl&&!sharedProductDbConnected)throw new Error('ยังไม่ได้เชื่อมฐานข้อมูลร่วม กรุณาเชื่อมต่อใหม่ก่อนบันทึก');if(sharedProductDbConnected){productTeamCode=$('productWriteCode').value.trim()||sessionStorage.getItem('cakeProductDbTeamCode')||'';if(productTeamCode)sessionStorage.setItem('cakeProductDbTeamCode',productTeamCode);await writeSharedProductDb({action:'upsert',product:nextProduct})}else commitProductData([...next,nextProduct],editingProductBarcode?'อัปเดตสินค้าแล้ว':'เพิ่มสินค้าใน Product DB แล้ว');
+    if(productApiUrl&&!sharedProductDbConnected)throw new Error('ยังไม่ได้เชื่อมฐานข้อมูลร่วม กรุณาเชื่อมต่อใหม่ก่อนบันทึก');if(sharedProductDbConnected){productTeamCode=sessionStorage.getItem('cakeProductDbTeamCode')||'';await writeSharedProductDb({action:'upsert',product:nextProduct})}else commitProductData([...next,nextProduct],editingProductBarcode?'อัปเดตสินค้าแล้ว':'เพิ่มสินค้าใน Product DB แล้ว');
     $('productEditor').hidden=true;
     editingProductBarcode=null;
     showProductLookup(nextProduct.barcode);
     $('productDbStatus').textContent='บันทึกแล้ว: '+nextProduct.name+' ('+nextProduct.barcode+')';
-  }catch(e){$('productFormStatus').textContent=e.message}
+  }catch(e){$('productFormStatus').textContent=productApiErrorMessage(e)}
 };
 $('cancelProduct').onclick=()=>{$('productEditor').hidden=true;editingProductBarcode=null};
 $('lookupProduct').onclick=()=>showProductLookup($('barcode').value);
@@ -337,7 +430,7 @@ async function applyProductImport(mode){
   if(!pendingProductImport)return;
   try{
     const result=mergeProductData(products,pendingProductImport.products,mode);
-    if(productApiUrl&&!sharedProductDbConnected)throw new Error('ยังไม่ได้เชื่อมฐานข้อมูลร่วม กรุณาเชื่อมต่อใหม่ก่อนบันทึก');if(sharedProductDbConnected){productTeamCode=$('productWriteCode').value.trim()||sessionStorage.getItem('cakeProductDbTeamCode')||'';if(productTeamCode)sessionStorage.setItem('cakeProductDbTeamCode',productTeamCode);await writeSharedProductDb({action:mode,products:pendingProductImport.products})}else commitProductData(result.products,mode==='replace'?'แทนที่ Product DB แล้ว':'นำเข้าและอัปเดต Product DB แล้ว');
+    if(productApiUrl&&!sharedProductDbConnected)throw new Error('ยังไม่ได้เชื่อมฐานข้อมูลร่วม กรุณาเชื่อมต่อใหม่ก่อนบันทึก');if(sharedProductDbConnected){productTeamCode=sessionStorage.getItem('cakeProductDbTeamCode')||'';await writeSharedProductDb({action:mode,products:pendingProductImport.products})}else commitProductData(result.products,mode==='replace'?'แทนที่ Product DB แล้ว':'นำเข้าและอัปเดต Product DB แล้ว');
     if(mode==='merge'&&result.conflicts.length)$('productDbStatus').textContent+=' · เขียนทับ barcode ซ้ำ '+result.conflicts.map(esc).join(', ');
     pendingProductImport=null;$('productImportReview').hidden=true;$('productImportFile').value='';
   }catch(e){$('productDbStatus').textContent='นำเข้าไม่สำเร็จ: '+e.message}
@@ -353,7 +446,37 @@ $('exportProductDb').onclick=async()=>{
     $('productDbStatus').textContent='ส่งออก Product DB เป็น JSON แล้ว';
   }catch(e){$('productDbStatus').textContent=e?.name==='AbortError'?'ยกเลิกการส่งออก':'ส่งออกไม่สำเร็จ: '+e.message}
 };
-initializeProductDatabase();
+function showMainScreen(screenId){
+  if(screenId!=='productScreen'&&scanning)stopScanner();
+  document.querySelectorAll('.screen').forEach(screen=>{screen.hidden=screen.id!==screenId});
+  document.querySelectorAll('#mainNav [data-screen-target]').forEach(button=>{
+    const active=button.dataset.screenTarget===screenId;button.classList.toggle('active',active);button.setAttribute('aria-pressed',String(active));
+  });
+}
+document.querySelectorAll('#mainNav [data-screen-target]').forEach(button=>button.addEventListener('click',()=>showMainScreen(button.dataset.screenTarget)));
+async function unlockApp(){
+  const code=$('teamAccessCode').value.trim();
+  if(!code){$('accessStatus').textContent='กรอกรหัสทีมก่อนเข้าสู่แอป';return}
+  const button=$('enterApp');button.disabled=true;$('accessStatus').textContent='กำลังตรวจรหัสทีม…';
+  productApiUrl=localStorage.getItem(PRODUCT_API_URL_KEY)||DEFAULT_PRODUCT_API_URL;
+  try{
+    const result=await callProductApi({action:'verify'},true,code);
+    if(!result.verified)throw new Error('Worker ไม่ได้ยืนยันรหัส');
+    productTeamCode=code;teamWriteVerified=true;sharedProductDbConnected=true;
+    sessionStorage.setItem('cakeProductDbTeamCode',code);
+    $('accessGate').hidden=true;$('appShell').hidden=false;
+    $('productCloudStatus').textContent='เข้าสู่ระบบแล้ว · กำลังโหลดฐานสินค้า…';
+    initializeProductDatabase();
+    restoreDraft().catch(()=>{$('status').textContent='พบฉบับร่างแต่กู้คืนไม่ครบ · ตรวจพื้นที่เก็บของ Safari'});
+  }catch(e){
+    if(e?.message==='Invalid team write code'){sessionStorage.removeItem('cakeProductDbTeamCode');productTeamCode='';teamWriteVerified=false}
+    $('accessStatus').textContent=productApiErrorMessage(e);
+  }finally{button.disabled=false}
+}
+$('enterApp').onclick=unlockApp;
+$('teamAccessCode').addEventListener('keydown',event=>{if(event.key==='Enter')unlockApp()});
+$('logoutApp').onclick=()=>{stopScanner();sessionStorage.removeItem('cakeProductDbTeamCode');productTeamCode='';teamWriteVerified=false;sharedProductDbConnected=false;$('appShell').hidden=true;$('accessGate').hidden=false;$('teamAccessCode').value='';$('accessStatus').textContent='ออกจากระบบแล้ว · ใส่รหัสทีมเพื่อเข้าใหม่'};
+window.addEventListener('DOMContentLoaded',()=>{const saved=sessionStorage.getItem('cakeProductDbTeamCode')||'';if(saved){$('teamAccessCode').value=saved;unlockApp()}});
 function handleScannedBarcode(value){$('barcode').value=value;showProductLookup(value)}
 
 let scanControls=null, scanning=false;

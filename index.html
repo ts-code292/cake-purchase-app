@@ -33,6 +33,19 @@ button.danger{background:#fff0f0;color:#c62828;border:0}
 footer{font-size:.76rem;color:#8e8e93;text-align:center;padding:4px 18px 24px}
 @media(min-width:650px){main{grid-template-columns:1fr 1fr}.wide{grid-column:1/-1}}
 @media(max-width:420px){main{padding:14px 12px;gap:14px}.card{padding:16px 14px}.row{gap:7px}.row button{padding:10px 12px;font-size:.88rem}}
+.product-editor,.import-review{margin-top:12px;padding:14px;background:#f4f8ff;border:1px solid #c7ddff;border-radius:13px}
+.product-editor h3{margin:0 0 8px;font-size:.95rem}
+.product-list{margin-top:14px}
+.product-row{padding:13px 0;border-top:1px solid var(--line);display:grid;gap:7px}
+.product-row:first-child{border-top:0}
+.product-row strong{font-size:.96rem}
+.product-meta{font-size:.8rem;color:var(--muted);line-height:1.45;overflow-wrap:anywhere}
+.product-row-actions{display:flex;gap:8px}
+.product-row-actions button{min-height:40px;padding:8px 13px}
+#productLookupResult{margin-top:8px;line-height:1.5}
+#productLookupResult button{min-height:38px;padding:7px 12px;margin-top:6px}
+@media(max-width:420px){.product-editor,.import-review{padding:12px}.product-row-actions button{flex:1}}
+
 .privacy-note{margin:12px 14px 0;padding:13px 15px;background:#fff;border:1px solid #d1d1d6;border-radius:14px;font-size:.85rem;line-height:1.45;color:#3a3a3c}
 .privacy-note p{margin:6px 0 0}
 .privacy-warning{color:#8a4b00;font-size:.78rem}
@@ -46,10 +59,40 @@ footer{font-size:.76rem;color:#8e8e93;text-align:center;padding:4px 18px 24px}
 </div>
 <main>
 <section class="card"><h2>1) รอบซื้อ</h2><label>ร้านค้า</label><input id="shop" placeholder="ชื่อร้าน / ผู้ขาย"><label>วันที่ซื้อ</label><input id="date" type="datetime-local"><label>หมายเหตุ (ถ้ามี)</label><input id="note" placeholder="เช่น ซื้อรอบเช้า"><div class="small" style="margin-top:8px">เลขรอบซื้อ: <strong id="sessionId"></strong></div></section>
-<section class="card"><h2>2) เพิ่มสินค้า</h2><label>บาร์โค้ด</label><div class="row"><input id="barcode" inputmode="numeric" placeholder="สแกนหรือพิมพ์บาร์โค้ด"><button id="scanBtn" class="secondary" type="button">เปิดกล้อง</button></div><video id="scanner" autoplay muted playsinline></video><div class="small" id="scanStatus">ใช้กล้องหลังสแกนบาร์โค้ด · ต้องเปิด HTTPS และอนุญาตกล้อง</div><label>ชื่อสินค้า / วัตถุดิบ</label><input id="name" placeholder="เช่น แป้งเค้ก หรือกล่องเค้ก S"><div class="row"><div><label>ขนาดแพ็ก</label><input id="packSize" placeholder="เช่น 1"></div><div><label>หน่วย</label><input id="unit" placeholder="กก. / ลิตร / ใบ"></div><div><label>จำนวนแพ็ก</label><input id="qty" type="number" min="0.01" step="any" placeholder="0"></div></div><label>ประเภท</label><select id="category"><option>วัตถุดิบ</option><option>ของใช้ร้าน (ติดตามสต็อก)</option><option>ไม่ติดตามสต็อก</option><option>ยังไม่ทราบ / รอตรวจ</option></select><button id="addItem" style="width:100%;margin-top:12px">เพิ่มรายการในรอบซื้อ</button></section>
-<section class="card wide"><h2>3) รายการที่บันทึก <span class="pill" id="count">0 รายการ</span></h2><div id="items"><p class="small">ยังไม่มีรายการ เพิ่มสินค้าจากส่วนด้านบน</p></div></section>
-<section class="card"><h2>4) ใบเสร็จ</h2><label>ถ่ายรูปหรือเลือกรูปใบเสร็จ (แนบได้หลายรูป)</label><input id="receipts" type="file" accept="image/*" capture="environment" multiple><div id="receiptPreview"></div><p class="small">รูปจะรวมอยู่ในไฟล์ส่งออกของรอบซื้อ (อาจทำให้ไฟล์มีขนาดใหญ่)</p></section>
-<section class="card"><h2>5) บันทึกและส่งต่อ</h2><div class="actions"><button id="saveDraft" class="secondary">เก็บฉบับร่างในเครื่อง</button><button id="export">ส่งออกชุดข้อมูล</button></div><p class="small" id="status" aria-live="polite">ยังไม่ได้ส่งออก · ยังไม่เชื่อม Google Drive หรือฐานข้อมูลกรุงเทพฯ</p></section>
+<section class="card"><h2>2) เพิ่มสินค้า</h2><label>บาร์โค้ด</label><div class="row"><input id="barcode" inputmode="numeric" placeholder="สแกนหรือพิมพ์บาร์โค้ด"><button id="scanBtn" class="secondary" type="button">เปิดกล้อง</button></div><video id="scanner" autoplay muted playsinline></video><div class="small" id="scanStatus" aria-live="polite">ใช้กล้องหลังสแกนบาร์โค้ด · ต้องเปิด HTTPS และอนุญาตกล้อง</div>
+<div class="small" id="productLookupResult" aria-live="polite"></div>
+<div id="productEditor" class="product-editor" hidden>
+  <h3 id="productEditorTitle">เพิ่มสินค้าในฐานข้อมูล</h3>
+  <label>บาร์โค้ด</label><input id="productBarcode" inputmode="numeric" autocomplete="off">
+  <label>ชื่อสินค้า</label><input id="productName" placeholder="เช่น แป้งเค้กตรา...">
+  <label>แบรนด์</label><input id="productBrand" placeholder="ระบุถ้ามี">
+  <div class="row"><div><label>ขนาดแพ็ก</label><input id="productPackSize" placeholder="เช่น 1"></div><div><label>หน่วย</label><input id="productUnit" placeholder="กก. / ลิตร / ใบ"></div></div>
+  <label>หมวดหมู่</label><input id="productCategory" list="productCategories" placeholder="เช่น วัตถุดิบ"><datalist id="productCategories"><option value="วัตถุดิบ"><option value="บรรจุภัณฑ์"><option value="ของใช้ร้าน"><option value="เครื่องดื่ม"><option value="อื่น ๆ"></datalist>
+  <div class="actions" style="margin-top:12px"><button id="saveProduct" type="button">บันทึกสินค้า</button><button id="cancelProduct" class="secondary" type="button">ยกเลิก</button></div>
+  <p class="small" id="productFormStatus" aria-live="polite"></p>
+</div>
+<div class="small" style="margin-top:10px"><button id="lookupProduct" class="secondary" type="button">ค้นหา barcode ใน Product DB</button></div><label>ชื่อสินค้า / วัตถุดิบ</label><input id="name" placeholder="เช่น แป้งเค้ก หรือกล่องเค้ก S"><div class="row"><div><label>ขนาดแพ็ก</label><input id="packSize" placeholder="เช่น 1"></div><div><label>หน่วย</label><input id="unit" placeholder="กก. / ลิตร / ใบ"></div><div><label>จำนวนแพ็ก</label><input id="qty" type="number" min="0.01" step="any" placeholder="0"></div></div><label>ประเภท</label><select id="category"><option>วัตถุดิบ</option><option>ของใช้ร้าน (ติดตามสต็อก)</option><option>ไม่ติดตามสต็อก</option><option>ยังไม่ทราบ / รอตรวจ</option></select><button id="addItem" style="width:100%;margin-top:12px">เพิ่มรายการในรอบซื้อ</button></section>
+<section class="card wide" id="productDatabase">
+  <h2>3) Product DB <span class="pill" id="productCount">0 รายการ</span></h2>
+  <label for="productSearch">ค้นหาสินค้า (ชื่อ, แบรนด์, barcode หรือหมวดหมู่)</label>
+  <input id="productSearch" type="search" placeholder="พิมพ์เพื่อค้นหา">
+  <div class="actions" style="margin-top:12px">
+    <button id="exportProductDb" class="secondary" type="button">ส่งออก Product DB (JSON)</button>
+    <button id="chooseProductImport" class="secondary" type="button">นำเข้า / กู้คืน JSON</button>
+  </div>
+  <input id="productImportFile" type="file" accept="application/json,.json" hidden>
+  <div id="productDbStatus" class="small" role="status" aria-live="polite">ข้อมูลเก็บในเครื่องนี้เท่านั้น</div>
+  <div id="productImportReview" class="import-review" hidden>
+    <p id="productImportSummary" class="small"></p>
+    <p class="small"><b>รวม/อัปเดต</b> จะเพิ่มสินค้าใหม่และเขียนทับ barcode ที่ซ้ำกับข้อมูลเดิม · <b>แทนที่ทั้งหมด</b> จะลบข้อมูลเดิมในเครื่องแล้วใช้ไฟล์นี้แทน</p>
+    <div class="actions"><button id="mergeProductImport" type="button">รวม / อัปเดต</button><button id="replaceProductImport" class="danger" type="button">แทนที่ DB ทั้งหมด</button></div>
+    <button id="cancelProductImport" class="secondary" type="button" style="margin-top:8px">ยกเลิกนำเข้า</button>
+  </div>
+  <div id="productList" class="product-list"><p class="small">ยังไม่มีสินค้าในฐานข้อมูล</p></div>
+</section>
+<section class="card wide"><h2>4) รายการที่บันทึก <span class="pill" id="count">0 รายการ</span></h2><div id="items"><p class="small">ยังไม่มีรายการ เพิ่มสินค้าจากส่วนด้านบน</p></div></section>
+<section class="card"><h2>5) ใบเสร็จ</h2><label>ถ่ายรูปหรือเลือกรูปใบเสร็จ (แนบได้หลายรูป)</label><input id="receipts" type="file" accept="image/*" capture="environment" multiple><div id="receiptPreview"></div><p class="small">รูปจะรวมอยู่ในไฟล์ส่งออกของรอบซื้อ (อาจทำให้ไฟล์มีขนาดใหญ่)</p></section>
+<section class="card"><h2>6) บันทึกและส่งต่อ</h2><div class="actions"><button id="saveDraft" class="secondary">เก็บฉบับร่างในเครื่อง</button><button id="export">ส่งออกชุดข้อมูล</button></div><p class="small" id="status" aria-live="polite">ยังไม่ได้ส่งออก · ยังไม่เชื่อม Google Drive หรือฐานข้อมูลกรุงเทพฯ</p></section>
 </main><footer>ต้นแบบ MVP · สต็อกจะยังไม่เพิ่มจนกว่ากรุงเทพฯ จะตรวจและยืนยัน</footer>
 <script>
 function retryZxingCdn(script){
@@ -93,6 +136,179 @@ async function restoreDraft(){
 window.addEventListener('DOMContentLoaded',()=>{restoreDraft().catch(()=>{$('status').textContent='พบฉบับร่างแต่กู้คืนไม่ครบ · ตรวจพื้นที่เก็บของ Safari'})});
 
 $('export').onclick=async()=>{if(!items.length){alert('เพิ่มรายการซื้ออย่างน้อย 1 รายการก่อนส่งออก');return}const data={...payload(),receipts:await Promise.all(receiptFiles.map(fileAsData))};const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const filename=sessionId+'.json';try{const file=new File([blob],filename,{type:'application/json'});if(navigator.canShare&&navigator.canShare({files:[file]})&&navigator.share){await navigator.share({files:[file],title:'ชุดข้อมูลรอบซื้อ'});$('status').textContent='เปิดเมนูแชร์แล้ว · เลือก Drive หรือบันทึกลง Files เพื่อส่งให้กรุงเทพฯ';return}}catch(err){if(err&&err.name==='AbortError'){$('status').textContent='ยกเลิกการแชร์';return}}const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(url),1500);$('status').textContent='ดาวน์โหลดไฟล์รอบซื้อแล้ว · เปิดเมนูแชร์ของ iPhone หรือแอป Files แล้วอัปโหลดไปยังโฟลเดอร์ Google Drive ของร้าน'};
+
+const PRODUCT_STORAGE_KEY='cakeProductDatabaseV1';
+let products=[],editingProductBarcode=null,pendingProductImport=null;
+function normalizeProduct(value){
+  if(!value||typeof value!=='object'||Array.isArray(value)) throw new Error('รายการสินค้าต้องเป็น object');
+  const barcode=typeof value.barcode==='string'?value.barcode.trim():'';
+  const name=typeof value.name==='string'?value.name.trim():'';
+  const brand=typeof value.brand==='string'?value.brand.trim():'';
+  const packSize=typeof value.packSize==='string'?value.packSize.trim():String(value.packSize??'').trim();
+  const unit=typeof value.unit==='string'?value.unit.trim():'';
+  const category=typeof value.category==='string'?value.category.trim():'';
+  if(!barcode) throw new Error('ต้องมี barcode เป็นข้อความ');
+  if(!name) throw new Error('ต้องมีชื่อสินค้า');
+  if(!category) throw new Error('ต้องมีหมวดหมู่');
+  return {barcode,name,brand,packSize,unit,category};
+}
+function parseProductImport(input){
+  let payload;
+  try{payload=typeof input==='string'?JSON.parse(input):input}catch(e){throw new Error('ไฟล์ไม่ใช่ JSON ที่อ่านได้: '+e.message)}
+  const rows=Array.isArray(payload)?payload:(payload&&Array.isArray(payload.products)?payload.products:null);
+  if(!rows) throw new Error('รูปแบบไฟล์ไม่ถูกต้อง: ต้องเป็น array หรือ object ที่มี products เป็น array');
+  if(!rows.length) throw new Error('ไม่พบสินค้าในไฟล์');
+  const byBarcode=new Map(),duplicateBarcodes=[];
+  rows.forEach((row,index)=>{
+    let product;
+    try{product=normalizeProduct(row)}catch(e){throw new Error('รายการที่ '+(index+1)+' ไม่ถูกต้อง: '+e.message)}
+    if(byBarcode.has(product.barcode)) duplicateBarcodes.push(product.barcode);
+    byBarcode.set(product.barcode,product);
+  });
+  return {products:[...byBarcode.values()],duplicateBarcodes:[...new Set(duplicateBarcodes)]};
+}
+function mergeProductData(current,incoming,mode){
+  if(mode==='replace') return {products:[...incoming],conflicts:[]};
+  if(mode!=='merge') throw new Error('โหมดนำเข้าไม่ถูกต้อง');
+  const byBarcode=new Map(current.map(p=>[p.barcode,p])),conflicts=[];
+  incoming.forEach(p=>{if(byBarcode.has(p.barcode))conflicts.push(p.barcode);byBarcode.set(p.barcode,p)});
+  return {products:[...byBarcode.values()],conflicts:[...new Set(conflicts)]};
+}
+function searchProductData(source,query){
+  const term=String(query||'').trim().toLocaleLowerCase();
+  if(!term)return [...source];
+  return source.filter(p=>[p.barcode,p.name,p.brand,p.packSize,p.unit,p.category].some(v=>String(v||'').toLocaleLowerCase().includes(term)));
+}
+function exportProductData(source){
+  return JSON.stringify({schemaVersion:1,exportedAt:new Date().toISOString(),products:source.map(normalizeProduct)},null,2);
+}
+function readProductData(storage=localStorage){
+  const raw=storage.getItem(PRODUCT_STORAGE_KEY);
+  if(!raw)return [];
+  const parsed=JSON.parse(raw);
+  if(!Array.isArray(parsed))throw new Error('ข้อมูล Product DB ในเครื่องมีรูปแบบไม่ถูกต้อง');
+  const seen=new Set();
+  return parsed.map((p,i)=>{const n=normalizeProduct(p);if(seen.has(n.barcode))throw new Error('พบ barcode ซ้ำในข้อมูลที่บันทึกไว้ (รายการ '+(i+1)+')');seen.add(n.barcode);return n});
+}
+function persistProductData(next,storage=localStorage){
+  const normalized=next.map(normalizeProduct),seen=new Set();
+  normalized.forEach(p=>{if(seen.has(p.barcode))throw new Error('barcode ซ้ำ: '+p.barcode);seen.add(p.barcode)});
+  storage.setItem(PRODUCT_STORAGE_KEY,JSON.stringify(normalized));
+  return normalized;
+}
+function renderProductDatabase(){
+  $('productCount').textContent=products.length+' รายการ';
+  const shown=searchProductData(products,$('productSearch').value);
+  $('productList').innerHTML=shown.length?shown.map(p=>{const i=products.findIndex(x=>x.barcode===p.barcode);return '<div class="product-row"><strong>'+esc(p.name)+'</strong><div class="product-meta">Barcode: '+esc(p.barcode)+' · '+esc(p.brand||'ไม่ระบุแบรนด์')+'</div><div class="product-meta">แพ็ก '+esc(p.packSize||'—')+' '+esc(p.unit)+' · '+esc(p.category)+'</div><div class="product-row-actions"><button class="secondary" type="button" data-product-action="edit" data-product-index="'+i+'">แก้ไข</button><button class="danger" type="button" data-product-action="delete" data-product-index="'+i+'">ลบ</button></div></div>'}).join(''):'<p class="small">'+(products.length?'ไม่พบสินค้าที่ค้นหา':'ยังไม่มีสินค้าในฐานข้อมูล')+'</p>';
+}
+function commitProductData(next,message){
+  try{products=persistProductData(next);renderProductDatabase();$('productDbStatus').textContent=message}
+  catch(e){$('productDbStatus').textContent='บันทึก Product DB ไม่สำเร็จ: '+e.message;throw e}
+}
+function openProductEditor(product=null,barcode=''){
+  editingProductBarcode=product?product.barcode:null;
+  $('productEditorTitle').textContent=product?'แก้ไขสินค้าใน Product DB':'เพิ่มสินค้าใหม่ใน Product DB';
+  $('productBarcode').value=product?.barcode||barcode;
+  $('productName').value=product?.name||'';
+  $('productBrand').value=product?.brand||'';
+  $('productPackSize').value=product?.packSize||'';
+  $('productUnit').value=product?.unit||'';
+  $('productCategory').value=product?.category||'';
+  $('productFormStatus').textContent='';
+  $('productEditor').hidden=false;
+}
+function showProductLookup(barcode){
+  const clean=String(barcode||'').trim();
+  if(!clean)return;
+  const found=products.find(p=>p.barcode===clean);
+  if(!found){
+    $('productLookupResult').textContent='ยังไม่มี barcode นี้ใน Product DB · กรอกข้อมูลด้านล่างเพื่อบันทึกสินค้าใหม่';
+    openProductEditor(null,clean);
+    return;
+  }
+  $('productEditor').hidden=true;
+  $('productLookupResult').innerHTML='<b>พบใน Product DB:</b> '+esc(found.name)+' · '+esc(found.brand||'ไม่ระบุแบรนด์')+' · แพ็ก '+esc(found.packSize||'—')+' '+esc(found.unit)+' · '+esc(found.category)+'<br><button class="secondary" id="editScannedProduct" type="button">แก้ไขข้อมูลสินค้านี้</button>';
+  $('editScannedProduct').onclick=()=>openProductEditor(found);
+  $('name').value=found.name;
+  $('packSize').value=found.packSize;
+  $('unit').value=found.unit;
+  const purchaseCategory=[...$('category').options].find(o=>o.textContent===found.category);
+  $('category').value=purchaseCategory?purchaseCategory.value:'ยังไม่ทราบ / รอตรวจ';
+}
+function initializeProductDatabase(){
+  try{products=readProductData();$('productDbStatus').textContent=products.length?'กู้คืน Product DB จากเครื่องนี้แล้ว · ข้อมูลยังอยู่ใน localStorage ของเบราว์เซอร์นี้':'เก็บข้อมูลในเครื่องนี้เท่านั้น · ส่งออก JSON เพื่อสำรองหรือย้ายเครื่อง'}
+  catch(e){products=[];$('productDbStatus').textContent='อ่าน Product DB เดิมไม่สำเร็จ: '+e.message+' · นำเข้าไฟล์สำรองเพื่อกู้คืนได้'}
+  renderProductDatabase();
+}
+$('productSearch').addEventListener('input',renderProductDatabase);
+$('productList').addEventListener('click',event=>{
+  const button=event.target.closest('[data-product-action]');
+  if(!button)return;
+  const product=products[Number(button.dataset.productIndex)];
+  if(!product)return;
+  if(button.dataset.productAction==='edit')openProductEditor(product);
+  if(button.dataset.productAction==='delete'&&confirm('ลบ '+product.name+' ('+product.barcode+') ออกจาก Product DB หรือไม่?')){
+    try{commitProductData(products.filter(p=>p.barcode!==product.barcode),'ลบสินค้าแล้ว')}
+    catch(e){}
+  }
+});
+$('saveProduct').onclick=()=>{
+  try{
+    const nextProduct=normalizeProduct({barcode:$('productBarcode').value,name:$('productName').value,brand:$('productBrand').value,packSize:$('productPackSize').value,unit:$('productUnit').value,category:$('productCategory').value});
+    const next=products.filter(p=>p.barcode!==editingProductBarcode);
+    if(next.some(p=>p.barcode===nextProduct.barcode))throw new Error('barcode นี้มีอยู่แล้ว กรุณาแก้ไขสินค้ารายการเดิมแทน');
+    commitProductData([...next,nextProduct],editingProductBarcode?'อัปเดตสินค้าแล้ว':'เพิ่มสินค้าใน Product DB แล้ว');
+    $('productEditor').hidden=true;
+    editingProductBarcode=null;
+    showProductLookup(nextProduct.barcode);
+    $('productDbStatus').textContent='บันทึกแล้ว: '+nextProduct.name+' ('+nextProduct.barcode+')';
+  }catch(e){$('productFormStatus').textContent=e.message}
+};
+$('cancelProduct').onclick=()=>{$('productEditor').hidden=true;editingProductBarcode=null};
+$('lookupProduct').onclick=()=>showProductLookup($('barcode').value);
+$('barcode').addEventListener('change',()=>showProductLookup($('barcode').value));
+$('chooseProductImport').onclick=()=>$('productImportFile').click();
+$('cancelProductImport').onclick=()=>{pendingProductImport=null;$('productImportReview').hidden=true;$('productImportFile').value=''};
+function readProductImportFile(file){
+  if(typeof file.text==='function')return file.text();
+  return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result||''));reader.onerror=()=>reject(reader.error||new Error('อ่านไฟล์ไม่สำเร็จ'));reader.readAsText(file)});
+}
+$('productImportFile').addEventListener('change',async()=>{
+  const file=$('productImportFile').files?.[0];
+  if(!file)return;
+  try{
+    const parsed=parseProductImport(await readProductImportFile(file));
+    pendingProductImport=parsed;
+    const conflicts=parsed.products.filter(p=>products.some(old=>old.barcode===p.barcode)).length;
+    const warnings=parsed.duplicateBarcodes.length?' · เตือน: barcode ซ้ำในไฟล์ '+parsed.duplicateBarcodes.join(', ')+' (ใช้ข้อมูลรายการสุดท้าย)':'';
+    $('productImportSummary').textContent='ตรวจไฟล์ผ่าน '+parsed.products.length+' รายการ · barcode ที่ซ้ำกับ DB ปัจจุบัน '+conflicts+' รายการ'+warnings;
+    $('productImportReview').hidden=false;
+    $('productDbStatus').textContent='ตรวจสอบไฟล์แล้ว เลือกวิธีนำเข้า';
+  }catch(e){pendingProductImport=null;$('productImportReview').hidden=true;$('productDbStatus').textContent='นำเข้าไม่ได้: '+e.message}
+});
+function applyProductImport(mode){
+  if(!pendingProductImport)return;
+  try{
+    const result=mergeProductData(products,pendingProductImport.products,mode);
+    commitProductData(result.products,mode==='replace'?'แทนที่ Product DB แล้ว':'นำเข้าและอัปเดต Product DB แล้ว');
+    if(mode==='merge'&&result.conflicts.length)$('productDbStatus').textContent+=' · เขียนทับ barcode ซ้ำ '+result.conflicts.map(esc).join(', ');
+    pendingProductImport=null;$('productImportReview').hidden=true;$('productImportFile').value='';
+  }catch(e){$('productDbStatus').textContent='นำเข้าไม่สำเร็จ: '+e.message}
+}
+$('mergeProductImport').onclick=()=>applyProductImport('merge');
+$('replaceProductImport').onclick=()=>{if(confirm('แทนที่ Product DB ในเครื่องทั้งหมดด้วยข้อมูลจากไฟล์นี้?'))applyProductImport('replace')};
+$('exportProductDb').onclick=async()=>{
+  try{
+    const blob=new Blob([exportProductData(products)],{type:'application/json'});
+    const file=new File([blob],'cake-product-db.json',{type:'application/json'});
+    if(navigator.canShare?.({files:[file]})&&navigator.share){await navigator.share({files:[file],title:'สำรอง Product DB'});$('productDbStatus').textContent='เปิดเมนูแชร์แล้ว · เลือกบันทึกลง Files เพื่อสำรอง Product DB';return}
+    const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=file.name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1500);
+    $('productDbStatus').textContent='ส่งออก Product DB เป็น JSON แล้ว';
+  }catch(e){$('productDbStatus').textContent=e?.name==='AbortError'?'ยกเลิกการส่งออก':'ส่งออกไม่สำเร็จ: '+e.message}
+};
+initializeProductDatabase();
+function handleScannedBarcode(value){$('barcode').value=value;showProductLookup(value)}
+
 let scanControls=null, scanning=false;
 function stopScanner(){
   try{scanControls?.stop()}catch(e){}
@@ -147,7 +363,7 @@ $('scanBtn').onclick=async()=>{
       $('scanner'),
       (result,err,controls)=>{
         if(result){
-          $('barcode').value=result.getText();
+          handleScannedBarcode(result.getText());
           $('scanStatus').textContent='อ่านบาร์โค้ดแล้ว: '+result.getText();
           try{controls.stop()}catch(e){}
           stopScanner();

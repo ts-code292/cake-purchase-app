@@ -1,0 +1,26 @@
+{
+  "name": "Cake Stock · บันทึกรอบซื้อ",
+  "short_name": "บันทึกรอบซื้อ",
+  "description": "บันทึกรายการซื้อและแนบใบเสร็จสำหรับร้านเค้ก",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f2f2f7",
+  "theme_color": "#f2f2f7",
+  "lang": "th",
+  "icons": [
+    {
+      "src": "./icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

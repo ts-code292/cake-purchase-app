@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#f2f2f7"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="บันทึกรอบซื้อ"><link rel="manifest" href="./manifest.webmanifest"><link rel="apple-touch-icon" href="./icons/icon-192.png"><title>Cake Stock · บันทึกซื้อ</title>
+<style>
+:root{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display","Helvetica Neue",system-ui,sans-serif;color:#1c1c1e;background:#f2f2f7;--blue:#007aff;--line:#e5e5ea;--muted:#8e8e93}
+*{box-sizing:border-box}
+body{margin:0;background:#f2f2f7;padding-bottom:calc(22px + env(safe-area-inset-bottom))}
+header{background:rgba(242,242,247,.96);color:#1c1c1e;padding:calc(14px + env(safe-area-inset-top)) 20px 12px;position:sticky;top:0;z-index:5;border-bottom:1px solid rgba(60,60,67,.12);backdrop-filter:blur(18px)}
+header h1{font-size:1.35rem;letter-spacing:-.025em;font-weight:750;margin:0 0 3px}
+header p{margin:0;color:var(--muted);font-size:.82rem}
+main{max-width:680px;margin:0 auto;padding:18px 16px;display:grid;gap:18px}
+.card{background:#fff;border:0;border-radius:17px;padding:18px 17px;box-shadow:0 1px 2px rgba(0,0,0,.035)}
+h2{font-size:1rem;font-weight:700;letter-spacing:-.01em;margin:0 0 14px;display:flex;align-items:center;gap:8px}
+label{display:block;font-size:.8rem;color:#6d6d72;margin:13px 0 6px}
+input,select,button{font:inherit}
+input,select{width:100%;padding:12px 13px;border:1px solid #d1d1d6;border-radius:11px;background:#f9f9fb;min-height:46px;color:#1c1c1e;outline:none}
+input:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(0,122,255,.12)}
+input::placeholder{color:#aeaeb2}
+input[type="file"]{padding:9px;background:#f9f9fb;font-size:.85rem}
+button{border:0;border-radius:12px;padding:12px 15px;background:var(--blue);color:white;font-weight:650;min-height:46px;cursor:pointer;transition:opacity .15s}
+button:active{opacity:.72}
+button.secondary{background:#e8f2ff;color:var(--blue);border:0}
+button.danger{background:#fff0f0;color:#c62828;border:0}
+.row{display:flex;gap:9px;align-items:end}.row>*{flex:1;min-width:0}
+.row button{flex:0 0 auto}
+.small{font-size:.78rem;color:var(--muted);line-height:1.45}
+.item{padding:13px 0;border-top:1px solid var(--line);display:grid;grid-template-columns:1fr auto;gap:8px}.item:first-child{border-top:0}
+.item strong{display:block;font-size:.94rem}.item .meta{font-size:.8rem;color:var(--muted);margin-top:3px}
+.pill{display:inline-block;background:#e8f2ff;color:var(--blue);padding:4px 9px;border-radius:99px;font-size:.73rem;font-weight:650}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+#receiptPreview{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+#receiptPreview img{width:76px;height:76px;object-fit:cover;border-radius:11px;border:1px solid var(--line)}
+#scanner{display:none;width:100%;border-radius:12px;margin-top:10px;background:#111}
+footer{font-size:.76rem;color:#8e8e93;text-align:center;padding:4px 18px 24px}
+@media(min-width:650px){main{grid-template-columns:1fr 1fr}.wide{grid-column:1/-1}}
+@media(max-width:420px){main{padding:14px 12px;gap:14px}.card{padding:16px 14px}.row{gap:7px}.row button{padding:10px 12px;font-size:.88rem}}
+</style></head><body>
+<header><h1>บันทึกรอบซื้อ</h1><p>Cake Stock <span aria-hidden="true">·</span> เชียงใหม่</p></header>
+<main>
+<section class="card"><h2>1) รอบซื้อ</h2><label>ร้านค้า</label><input id="shop" placeholder="ชื่อร้าน / ผู้ขาย"><label>วันที่ซื้อ</label><input id="date" type="datetime-local"><label>หมายเหตุ (ถ้ามี)</label><input id="note" placeholder="เช่น ซื้อรอบเช้า"><div class="small" style="margin-top:8px">เลขรอบซื้อ: <strong id="sessionId"></strong></div></section>
+<section class="card"><h2>2) เพิ่มสินค้า</h2><label>บาร์โค้ด</label><div class="row"><input id="barcode" inputmode="numeric" placeholder="สแกนหรือพิมพ์บาร์โค้ด"><button id="scanBtn" class="secondary" type="button">เปิดกล้อง</button></div><video id="scanner" playsinline></video><div class="small" id="scanStatus">กล้องต้องใช้เบราว์เซอร์ที่รองรับ Barcode Detection API และอนุญาตกล้อง</div><label>ชื่อสินค้า / วัตถุดิบ</label><input id="name" placeholder="เช่น แป้งเค้ก หรือกล่องเค้ก S"><div class="row"><div><label>ขนาดแพ็ก</label><input id="packSize" placeholder="เช่น 1"></div><div><label>หน่วย</label><input id="unit" placeholder="กก. / ลิตร / ใบ"></div><div><label>จำนวนแพ็ก</label><input id="qty" type="number" min="0.01" step="any" placeholder="0"></div></div><label>ประเภท</label><select id="category"><option>วัตถุดิบ</option><option>ของใช้ร้าน (ติดตามสต็อก)</option><option>ไม่ติดตามสต็อก</option><option>ยังไม่ทราบ / รอตรวจ</option></select><button id="addItem" style="width:100%;margin-top:12px">เพิ่มรายการในรอบซื้อ</button></section>
+<section class="card wide"><h2>3) รายการที่บันทึก <span class="pill" id="count">0 รายการ</span></h2><div id="items"><p class="small">ยังไม่มีรายการ เพิ่มสินค้าจากส่วนด้านบน</p></div></section>
+<section class="card"><h2>4) ใบเสร็จ</h2><label>ถ่ายรูปหรือเลือกรูปใบเสร็จ (แนบได้หลายรูป)</label><input id="receipts" type="file" accept="image/*" capture="environment" multiple><div id="receiptPreview"></div><p class="small">รูปจะรวมอยู่ในไฟล์ส่งออกของรอบซื้อ (อาจทำให้ไฟล์มีขนาดใหญ่)</p></section>
+<section class="card"><h2>5) บันทึกและส่งต่อ</h2><div class="actions"><button id="saveDraft" class="secondary">เก็บฉบับร่างในเครื่อง</button><button id="export">ส่งออกชุดข้อมูล</button></div><p class="small" id="status" aria-live="polite">ยังไม่ได้ส่งออก · ยังไม่เชื่อม Google Drive หรือฐานข้อมูลกรุงเทพฯ</p></section>
+</main><footer>ต้นแบบ MVP · สต็อกจะยังไม่เพิ่มจนกว่ากรุงเทพฯ จะตรวจและยืนยัน</footer>
+<script>
+const $=id=>document.getElementById(id);let items=[],receiptFiles=[],stream=null,detector=null;
+const now=new Date();now.setMinutes(now.getMinutes()-now.getTimezoneOffset());$('date').value=now.toISOString().slice(0,16);
+function newId(){return 'CM-'+new Date().toISOString().replace(/[-:TZ.]/g,'').slice(0,14)+'-'+Math.random().toString(36).slice(2,6).toUpperCase()}let sessionId=newId();$('sessionId').textContent=sessionId;
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function render(){$('count').textContent=items.length+' รายการ';$('items').innerHTML=items.length?items.map((x,i)=>`<div class="item"><div><strong>${esc(x.name||'สินค้ายังไม่ทราบชื่อ')}</strong><div class="meta">บาร์โค้ด: ${esc(x.barcode||'—')} · ${esc(x.category)}</div><div class="meta">แพ็กละ ${esc(x.packSize)} ${esc(x.unit)} × ${x.qty} แพ็ก</div></div><button class="danger" data-del="${i}">ลบ</button></div>`).join(''):'<p class="small">ยังไม่มีรายการ เพิ่มสินค้าจากส่วนด้านบน</p>';$('items').querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{items.splice(+b.dataset.del,1);render()})}
+$('addItem').onclick=()=>{const qty=Number($('qty').value),name=$('name').value.trim();if(!qty||qty<=0){alert('กรอกจำนวนแพ็กให้มากกว่า 0');return}if(!name&&!$('barcode').value.trim()){alert('กรอกชื่อสินค้าหรือบาร์โค้ด');return}items.push({barcode:$('barcode').value.trim(),name,packSize:$('packSize').value.trim(),unit:$('unit').value.trim(),qty,category:$('category').value});['barcode','name','packSize','unit','qty'].forEach(id=>$(id).value='');render()};
+$('receipts').onchange=()=>{receiptFiles=Array.from($('receipts').files||[]);$('receiptPreview').innerHTML='';receiptFiles.forEach(f=>{const img=document.createElement('img');img.alt='ตัวอย่างใบเสร็จ';img.src=URL.createObjectURL(f);$('receiptPreview').appendChild(img)})};
+function payload(){return{schemaVersion:1,sessionId,shop:$('shop').value.trim(),purchasedAt:$('date').value,note:$('note').value.trim(),items,receiptCount:receiptFiles.length,workflowStatus:'pending_review',createdAt:new Date().toISOString()}}
+function fileAsData(f){return new Promise(resolve=>{const r=new FileReader();r.onload=()=>resolve({name:f.name,type:f.type,dataUrl:r.result});r.readAsDataURL(f)})}
+$('saveDraft').onclick=async()=>{localStorage.setItem('cakePurchaseDraft',JSON.stringify({...payload(),receipts:await Promise.all(receiptFiles.map(fileAsData))}));$('status').textContent='เก็บฉบับร่างไว้ในเบราว์เซอร์เครื่องนี้แล้ว'};
+$('export').onclick=async()=>{if(!items.length){alert('เพิ่มรายการซื้ออย่างน้อย 1 รายการก่อนส่งออก');return}const data={...payload(),receipts:await Promise.all(receiptFiles.map(fileAsData))};const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=sessionId+'.json';a.click();URL.revokeObjectURL(url);$('status').textContent='สร้างไฟล์รอบซื้อแล้ว · อัปโหลด/แชร์ไฟล์นี้ไปยังโฟลเดอร์ Google Drive ได้'};
+$('scanBtn').onclick=async()=>{if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;$('scanner').style.display='none';$('scanBtn').textContent='เปิดกล้อง';return}if(!('BarcodeDetector'in window)){$('scanStatus').textContent='เบราว์เซอร์นี้ไม่รองรับสแกนผ่านกล้อง โปรดพิมพ์บาร์โค้ดหรือใช้เครื่องสแกนภายนอก';return}try{detector=new BarcodeDetector({formats:['ean_13','ean_8','upc_a','upc_e','code_128','qr_code']});stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});$('scanner').srcObject=stream;$('scanner').style.display='block';$('scanBtn').textContent='ปิดกล้อง';await $('scanner').play();$('scanStatus').textContent='เล็งกล้องไปที่บาร์โค้ด';const loop=async()=>{if(!stream)return;try{const codes=await detector.detect($('scanner'));if(codes.length){$('barcode').value=codes[0].rawValue;$('scanStatus').textContent='อ่านบาร์โค้ดแล้ว';stream.getTracks().forEach(t=>t.stop());stream=null;$('scanner').style.display='none';$('scanBtn').textContent='เปิดกล้อง';return}}catch(e){}requestAnimationFrame(loop)};loop()}catch(e){$('scanStatus').textContent='เปิดกล้องไม่ได้: ตรวจสิทธิ์กล้อง และเปิดหน้าเว็บผ่าน HTTPS หรือ localhost'}};
+</script>
+<script>
+if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
+  window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(err => console.warn("SW:", err)));
+}
+</script>
+</body></html>

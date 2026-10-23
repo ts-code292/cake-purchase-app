@@ -78,7 +78,7 @@ footer{font-size:.76rem;color:#8e8e93;text-align:center;padding:4px 18px 24px}
   </section>
 </div>
 <div id="appShell" hidden>
-<header><div class="app-header"><div><h1>บันทึกรอบซื้อ</h1><p>Cake Stock <span aria-hidden="true">·</span> เชียงใหม่</p></div><button id="logoutApp" class="secondary" type="button">ออกจากระบบ</button></div></header>
+<header><div class="app-header"><div><h1>บันทึกรอบซื้อ</h1><p>Cake Stock <span aria-hidden="true">·</span> เชียงใหม่ <span class="pill" aria-label="เวอร์ชัน 1.0.0">V.1.0.0</span></p></div><button id="logoutApp" class="secondary" type="button">ออกจากระบบ</button></div></header>
 <div class="privacy-note" role="note">
   <strong>Product DB ใช้ร่วมกันได้ · ข้อมูลสินค้าอ่านได้สาธารณะ</strong>
   <p>ฐานข้อมูลสินค้า (barcode, ชื่อ, แบรนด์, ขนาดแพ็ก, หน่วย และหมวดหมู่) เก็บในไฟล์สาธารณะบน GitHub เพื่อให้ทุกเครื่องอ่านร่วมกันได้ ห้ามใส่ราคา ต้นทุน สต็อก หรือข้อมูลส่วนบุคคล</p>
@@ -491,7 +491,7 @@ $('purchaseScanBtn').onclick=()=>toggleScanner('purchase');
 </script>
 <script>
 if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
-  window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(err => console.warn("SW:", err)));
+  window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js?v=5").catch(err => console.warn("SW:", err)));
 }
 </script>
 </body></html>

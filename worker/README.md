@@ -33,4 +33,4 @@ The Worker writes to `products.json` on the `main` branch. The initial catalog f
 - `POST /products` with `action: verify`: validate the team code without changing the catalog and return the public catalog.
 - `POST /products`: write an `upsert`, `merge`, or `mergeMissing` action. Requires `Authorization: Bearer <team-code>`, JSON content type, and the configured app Origin. Invalid codes are rate-limited.
 
-Only requests from `https://ts-code292.github.io` are accepted by the Worker CORS policy. Update `APP_ORIGIN` if the GitHub Pages site uses another origin.
+Browser write requests require the exact configured `Origin` (`https://ts-code292.github.io`) and JSON content type. CORS/Origin checks only constrain browser callers; the team code remains the write authorization. The failed-code limiter allows 10 attempts per 60 seconds per client IP within each Cloudflare location; Cloudflare documents this limiter as approximate and eventually consistent. Update `APP_ORIGIN` if the GitHub Pages site uses another origin.

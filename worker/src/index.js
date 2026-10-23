@@ -45,6 +45,11 @@ export default {
       try { body = JSON.parse(bodyText); }
       catch { return json({ error: "Request body must be valid JSON" }, 400, cors); }
 
+      if (body?.action === "verify") {
+        const snapshot = await readCatalog(env);
+        return json({ verified: true, ...snapshot.catalog }, 200, { ...cors, "Cache-Control": "no-store" });
+      }
+
       const result = await mutateCatalog(env, body);
       return json(result, 200, { ...cors, "Cache-Control": "no-store" });
     } catch (error) {

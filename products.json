@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-10-23T08:56:50.349Z",
+  "updatedAt": "2026-10-23T09:23:48.761Z",
   "products": [
     {
       "barcode": "8858705607398",
@@ -17,6 +17,14 @@
       "packSize": "1",
       "unit": "ขวด",
       "category": "วัตถุดิบ"
+    },
+    {
+      "barcode": "45415648",
+      "name": "ดกด",
+      "brand": "ดดกด",
+      "packSize": "",
+      "unit": "1",
+      "category": "10"
     }
   ]
 }

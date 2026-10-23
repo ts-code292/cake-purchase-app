@@ -1,5 +1,6 @@
 const API_PATH = "/products";
 const MAX_BODY_BYTES = 256_000;
+const MAX_PRODUCTS = 1_000;
 
 export default {
   async fetch(request, env) {
@@ -32,15 +33,33 @@ export default {
       if (!env.GITHUB_TOKEN || !env.TEAM_WRITE_CODE) {
         return json({ error: "Worker secrets are not configured" }, 503, cors);
       }
+      if (origin !== allowedOrigin) {
+        return json({ error: "Origin is required for write requests" }, 403, cors);
+      }
+      const contentType = request.headers.get("Content-Type") || "";
+      if (!/^application\/json(?:\s*;|$)/i.test(contentType)) {
+        return json({ error: "Content-Type must be application/json" }, 415, cors);
+      }
+
       const suppliedCode = (request.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "");
       if (!constantTimeEqual(suppliedCode, env.TEAM_WRITE_CODE)) {
+        const clientIp = request.headers.get("CF-Connecting-IP") || "unknown";
+        const { success } = await env.TEAM_AUTH_LIMITER.limit({ key: clientIp });
+        if (!success) {
+          return json({ error: "Too many invalid team codes. Try again in a minute." }, 429, {
+            ...cors,
+            "Retry-After": "60"
+          });
+        }
         return json({ error: "Invalid team write code" }, 401, cors);
       }
 
-      const bodyText = await request.text();
-      if (new TextEncoder().encode(bodyText).byteLength > MAX_BODY_BYTES) {
+      const contentLength = Number(request.headers.get("Content-Length") || 0);
+      if (contentLength > MAX_BODY_BYTES) {
         return json({ error: "Request is too large" }, 413, cors);
       }
+      const bodyText = await readLimitedText(request, MAX_BODY_BYTES);
+      if (bodyText === null) return json({ error: "Request is too large" }, 413, cors);
       let body;
       try { body = JSON.parse(bodyText); }
       catch { return json({ error: "Request body must be valid JSON" }, 400, cors); }
@@ -85,11 +104,19 @@ function normalizeProduct(value) {
   if (!barcode) throw new Error("Product barcode is required as text");
   if (!name) throw new Error("Product name is required");
   if (!category) throw new Error("Product category is required");
-  return { barcode, name, brand, packSize, unit, category };
+  const fields = { barcode, name, brand, packSize, unit, category };
+  const limits = { barcode: 64, name: 200, brand: 120, packSize: 80, unit: 40, category: 80 };
+  for (const [field, maxLength] of Object.entries(limits)) {
+    if (new TextEncoder().encode(fields[field]).byteLength > maxLength) {
+      throw new Error("Product " + field + " exceeds the maximum length");
+    }
+  }
+  return fields;
 }
 
 function normalizeList(value) {
   if (!Array.isArray(value)) throw new Error("products must be an array");
+  if (value.length > MAX_PRODUCTS) throw new Error("Product DB cannot exceed " + MAX_PRODUCTS + " products");
   const list = value.map(normalizeProduct);
   const seen = new Set();
   for (const product of list) {
@@ -131,6 +158,30 @@ function githubHeaders(env) {
   };
 }
 
+async function readLimitedText(request, maxBytes) {
+  const reader = request.body?.getReader();
+  if (!reader) return "";
+  const chunks = [];
+  let total = 0;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > maxBytes) {
+      await reader.cancel();
+      return null;
+    }
+    chunks.push(value);
+  }
+  const bytes = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return new TextDecoder().decode(bytes);
+}
+
 async function readCatalog(env) {
   const response = await fetch(repoFileUrl(env), { headers: githubHeaders(env) });
   if (response.status === 404) return { sha: null, catalog: { schemaVersion: 1, products: [] } };
@@ -150,7 +201,7 @@ async function readCatalog(env) {
 async function mutateCatalog(env, body) {
   if (!body || typeof body !== "object" || Array.isArray(body)) throw new Error("Request body must be an object");
   const action = body.action;
-  if (!["upsert", "merge", "mergeMissing", "replace"].includes(action)) {
+  if (!["upsert", "merge", "mergeMissing"].includes(action)) {
     throw new Error("Unsupported action");
   }
 
@@ -163,8 +214,6 @@ async function mutateCatalog(env, body) {
       const product = normalizeProduct(body.product);
       products = products.filter(item => item.barcode !== product.barcode);
       products.push(product);
-    } else if (action === "replace") {
-      products = normalizeList(body.products);
     } else {
       const incoming = normalizeList(body.products);
       const map = new Map(products.map(product => [product.barcode, product]));
@@ -178,6 +227,7 @@ async function mutateCatalog(env, body) {
       products = [...map.values()];
     }
 
+    products = normalizeList(products);
     const catalog = { schemaVersion: 1, updatedAt: new Date().toISOString(), products };
     const content = encodeBase64Utf8(JSON.stringify(catalog, null, 2) + "\n");
     const putBody = {

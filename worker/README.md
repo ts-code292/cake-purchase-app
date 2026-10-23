@@ -8,6 +8,12 @@ The repository is public, so `products.json` and its product records are readabl
 
 The app asks for a shared write code when staff connect. The Worker checks it and uses the GitHub token stored as a Cloudflare Worker secret. The write code is kept only in the current browser session. Use a long random code, and share it only with staff. Anyone with the code can write to the catalog; rotate it in Cloudflare if it is exposed.
 
+## ค่าใช้จ่ายและโควตาฟรี
+
+ใช้ Cloudflare Workers Free และ URL `workers.dev` ที่ Wrangler จัดให้ ไม่ต้องซื้อ Workers Paid, custom domain, KV หรือฐานข้อมูล Cloudflare อื่น ๆ โควตาฟรีมี 100,000 คำขอต่อวัน; เมื่อเกินจะถูกปฏิเสธจนกว่าจะรีเซ็ต ไม่ได้คิดค่าเกินโควตาบนแผน Free ตาม [ราคาและข้อจำกัด Workers](https://developers.cloudflare.com/workers/platform/pricing/)
+
+ให้ตรวจหน้า Plan/Billing ก่อนยืนยันการตั้งค่า และอย่าเลือกหรืออัปเกรดเป็น Workers Paid (แผน Paid เริ่มคิดค่าบริการรายเดือน) หากหน้าจอขอเปิดแผนเสียเงิน ให้หยุดไว้ก่อน
+
 ## Deploy the Worker
 
 1. Create a fine-grained GitHub token limited to the `ts-code292/cake-purchase-app` repository with **Contents: Read and write** permission.

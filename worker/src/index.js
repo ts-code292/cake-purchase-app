@@ -150,7 +150,7 @@ async function readCatalog(env) {
 async function mutateCatalog(env, body) {
   if (!body || typeof body !== "object" || Array.isArray(body)) throw new Error("Request body must be an object");
   const action = body.action;
-  if (!["upsert", "delete", "merge", "mergeMissing", "replace"].includes(action)) {
+  if (!["upsert", "merge", "mergeMissing", "replace"].includes(action)) {
     throw new Error("Unsupported action");
   }
 
@@ -163,10 +163,6 @@ async function mutateCatalog(env, body) {
       const product = normalizeProduct(body.product);
       products = products.filter(item => item.barcode !== product.barcode);
       products.push(product);
-    } else if (action === "delete") {
-      const barcode = typeof body.barcode === "string" ? body.barcode.trim() : "";
-      if (!barcode) throw new Error("Barcode is required");
-      products = products.filter(item => item.barcode !== barcode);
     } else if (action === "replace") {
       products = normalizeList(body.products);
     } else {

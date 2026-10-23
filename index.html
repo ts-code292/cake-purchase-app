@@ -67,7 +67,7 @@ footer{font-size:.76rem;color:#8e8e93;text-align:center;padding:4px 18px 24px}
   <label>ชื่อสินค้า</label><input id="productName" placeholder="เช่น แป้งเค้กตรา...">
   <label>แบรนด์</label><input id="productBrand" placeholder="ระบุถ้ามี">
   <div class="row"><div><label>ขนาดแพ็ก</label><input id="productPackSize" placeholder="เช่น 1"></div><div><label>หน่วย</label><input id="productUnit" placeholder="กก. / ลิตร / ใบ"></div></div>
-  <label>หมวดหมู่</label><select id="productCategory"><option value="">เลือกหมวดหมู่</option><option>วัตถุดิบ</option><option>บรรจุภัณฑ์</option><option>ของใช้ร้าน</option><option>เครื่องดื่ม</option><option>อื่น ๆ</option></select>
+  <label>หมวดหมู่</label><input id="productCategory" list="productCategories" placeholder="เช่น วัตถุดิบ"><datalist id="productCategories"><option value="วัตถุดิบ"><option value="บรรจุภัณฑ์"><option value="ของใช้ร้าน"><option value="เครื่องดื่ม"><option value="อื่น ๆ"></datalist>
   <div class="actions" style="margin-top:12px"><button id="saveProduct" type="button">บันทึกสินค้า</button><button id="cancelProduct" class="secondary" type="button">ยกเลิก</button></div>
   <p class="small" id="productFormStatus" aria-live="polite"></p>
 </div>
@@ -233,7 +233,7 @@ function showProductLookup(barcode){
   $('packSize').value=found.packSize;
   $('unit').value=found.unit;
   const purchaseCategory=[...$('category').options].find(o=>o.textContent===found.category);
-  if(purchaseCategory)$('category').value=purchaseCategory.value;
+  $('category').value=purchaseCategory?purchaseCategory.value:'ยังไม่ทราบ / รอตรวจ';
 }
 function initializeProductDatabase(){
   try{products=readProductData();$('productDbStatus').textContent=products.length?'กู้คืน Product DB จากเครื่องนี้แล้ว · ข้อมูลยังอยู่ใน localStorage ของเบราว์เซอร์นี้':'เก็บข้อมูลในเครื่องนี้เท่านั้น · ส่งออก JSON เพื่อสำรองหรือย้ายเครื่อง'}
@@ -258,9 +258,10 @@ $('saveProduct').onclick=()=>{
     const next=products.filter(p=>p.barcode!==editingProductBarcode);
     if(next.some(p=>p.barcode===nextProduct.barcode))throw new Error('barcode นี้มีอยู่แล้ว กรุณาแก้ไขสินค้ารายการเดิมแทน');
     commitProductData([...next,nextProduct],editingProductBarcode?'อัปเดตสินค้าแล้ว':'เพิ่มสินค้าใน Product DB แล้ว');
-    $('barcode').value=nextProduct.barcode;$('name').value=nextProduct.name;$('packSize').value=nextProduct.packSize;$('unit').value=nextProduct.unit;
-    $('productEditor').hidden=true;$('productLookupResult').textContent='บันทึกแล้ว: '+nextProduct.name+' ('+nextProduct.barcode+')';
+    $('productEditor').hidden=true;
     editingProductBarcode=null;
+    showProductLookup(nextProduct.barcode);
+    $('productDbStatus').textContent='บันทึกแล้ว: '+nextProduct.name+' ('+nextProduct.barcode+')';
   }catch(e){$('productFormStatus').textContent=e.message}
 };
 $('cancelProduct').onclick=()=>{$('productEditor').hidden=true;editingProductBarcode=null};
@@ -268,14 +269,18 @@ $('lookupProduct').onclick=()=>showProductLookup($('barcode').value);
 $('barcode').addEventListener('change',()=>showProductLookup($('barcode').value));
 $('chooseProductImport').onclick=()=>$('productImportFile').click();
 $('cancelProductImport').onclick=()=>{pendingProductImport=null;$('productImportReview').hidden=true;$('productImportFile').value=''};
+function readProductImportFile(file){
+  if(typeof file.text==='function')return file.text();
+  return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result||''));reader.onerror=()=>reject(reader.error||new Error('อ่านไฟล์ไม่สำเร็จ'));reader.readAsText(file)});
+}
 $('productImportFile').addEventListener('change',async()=>{
   const file=$('productImportFile').files?.[0];
   if(!file)return;
   try{
-    const parsed=parseProductImport(await file.text());
+    const parsed=parseProductImport(await readProductImportFile(file));
     pendingProductImport=parsed;
     const conflicts=parsed.products.filter(p=>products.some(old=>old.barcode===p.barcode)).length;
-    const warnings=parsed.duplicateBarcodes.length?' · เตือน: barcode ซ้ำในไฟล์ '+parsed.duplicateBarcodes.map(esc).join(', ')+' (ใช้ข้อมูลรายการสุดท้าย)':'';
+    const warnings=parsed.duplicateBarcodes.length?' · เตือน: barcode ซ้ำในไฟล์ '+parsed.duplicateBarcodes.join(', ')+' (ใช้ข้อมูลรายการสุดท้าย)':'';
     $('productImportSummary').textContent='ตรวจไฟล์ผ่าน '+parsed.products.length+' รายการ · barcode ที่ซ้ำกับ DB ปัจจุบัน '+conflicts+' รายการ'+warnings;
     $('productImportReview').hidden=false;
     $('productDbStatus').textContent='ตรวจสอบไฟล์แล้ว เลือกวิธีนำเข้า';

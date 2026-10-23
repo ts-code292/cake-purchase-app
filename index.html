@@ -46,12 +46,19 @@ footer{font-size:.76rem;color:#8e8e93;text-align:center;padding:4px 18px 24px}
 </div>
 <main>
 <section class="card"><h2>1) รอบซื้อ</h2><label>ร้านค้า</label><input id="shop" placeholder="ชื่อร้าน / ผู้ขาย"><label>วันที่ซื้อ</label><input id="date" type="datetime-local"><label>หมายเหตุ (ถ้ามี)</label><input id="note" placeholder="เช่น ซื้อรอบเช้า"><div class="small" style="margin-top:8px">เลขรอบซื้อ: <strong id="sessionId"></strong></div></section>
-<section class="card"><h2>2) เพิ่มสินค้า</h2><label>บาร์โค้ด</label><div class="row"><input id="barcode" inputmode="numeric" placeholder="สแกนหรือพิมพ์บาร์โค้ด"><button id="scanBtn" class="secondary" type="button">เปิดกล้อง</button></div><video id="scanner" playsinline></video><div class="small" id="scanStatus">สแกนด้วยกล้องผ่าน ZXing (ต้องเปิดเว็บ HTTPS และอนุญาตกล้อง)</div><label>ชื่อสินค้า / วัตถุดิบ</label><input id="name" placeholder="เช่น แป้งเค้ก หรือกล่องเค้ก S"><div class="row"><div><label>ขนาดแพ็ก</label><input id="packSize" placeholder="เช่น 1"></div><div><label>หน่วย</label><input id="unit" placeholder="กก. / ลิตร / ใบ"></div><div><label>จำนวนแพ็ก</label><input id="qty" type="number" min="0.01" step="any" placeholder="0"></div></div><label>ประเภท</label><select id="category"><option>วัตถุดิบ</option><option>ของใช้ร้าน (ติดตามสต็อก)</option><option>ไม่ติดตามสต็อก</option><option>ยังไม่ทราบ / รอตรวจ</option></select><button id="addItem" style="width:100%;margin-top:12px">เพิ่มรายการในรอบซื้อ</button></section>
+<section class="card"><h2>2) เพิ่มสินค้า</h2><label>บาร์โค้ด</label><div class="row"><input id="barcode" inputmode="numeric" placeholder="สแกนหรือพิมพ์บาร์โค้ด"><button id="scanBtn" class="secondary" type="button">เปิดกล้อง</button></div><video id="scanner" autoplay muted playsinline></video><div class="small" id="scanStatus">ใช้กล้องหลังสแกนบาร์โค้ด · ต้องเปิด HTTPS และอนุญาตกล้อง</div><label>ชื่อสินค้า / วัตถุดิบ</label><input id="name" placeholder="เช่น แป้งเค้ก หรือกล่องเค้ก S"><div class="row"><div><label>ขนาดแพ็ก</label><input id="packSize" placeholder="เช่น 1"></div><div><label>หน่วย</label><input id="unit" placeholder="กก. / ลิตร / ใบ"></div><div><label>จำนวนแพ็ก</label><input id="qty" type="number" min="0.01" step="any" placeholder="0"></div></div><label>ประเภท</label><select id="category"><option>วัตถุดิบ</option><option>ของใช้ร้าน (ติดตามสต็อก)</option><option>ไม่ติดตามสต็อก</option><option>ยังไม่ทราบ / รอตรวจ</option></select><button id="addItem" style="width:100%;margin-top:12px">เพิ่มรายการในรอบซื้อ</button></section>
 <section class="card wide"><h2>3) รายการที่บันทึก <span class="pill" id="count">0 รายการ</span></h2><div id="items"><p class="small">ยังไม่มีรายการ เพิ่มสินค้าจากส่วนด้านบน</p></div></section>
 <section class="card"><h2>4) ใบเสร็จ</h2><label>ถ่ายรูปหรือเลือกรูปใบเสร็จ (แนบได้หลายรูป)</label><input id="receipts" type="file" accept="image/*" capture="environment" multiple><div id="receiptPreview"></div><p class="small">รูปจะรวมอยู่ในไฟล์ส่งออกของรอบซื้อ (อาจทำให้ไฟล์มีขนาดใหญ่)</p></section>
 <section class="card"><h2>5) บันทึกและส่งต่อ</h2><div class="actions"><button id="saveDraft" class="secondary">เก็บฉบับร่างในเครื่อง</button><button id="export">ส่งออกชุดข้อมูล</button></div><p class="small" id="status" aria-live="polite">ยังไม่ได้ส่งออก · ยังไม่เชื่อม Google Drive หรือฐานข้อมูลกรุงเทพฯ</p></section>
 </main><footer>ต้นแบบ MVP · สต็อกจะยังไม่เพิ่มจนกว่ากรุงเทพฯ จะตรวจและยืนยัน</footer>
-<script src="https://unpkg.com/@zxing/browser@0.1.5/umd/index.min.js"></script>
+<script>
+function retryZxingCdn(script){
+  script.onerror=null;
+  script.src='https://cdn.jsdelivr.net/npm/@zxing/browser@0.1.5/umd/zxing-browser.min.js';
+  script.onerror=()=>{script.dataset.failed='true'};
+}
+</script>
+<script id="zxingLibrary" src="https://unpkg.com/@zxing/browser@0.1.5/umd/zxing-browser.min.js" onerror="retryZxingCdn(this)"></script>
 <script>
 const $=id=>document.getElementById(id);let items=[],receiptFiles=[],stream=null,detector=null;
 const now=new Date();now.setMinutes(now.getMinutes()-now.getTimezoneOffset());$('date').value=now.toISOString().slice(0,16);
@@ -87,41 +94,72 @@ window.addEventListener('DOMContentLoaded',()=>{restoreDraft().catch(()=>{$('sta
 
 $('export').onclick=async()=>{if(!items.length){alert('เพิ่มรายการซื้ออย่างน้อย 1 รายการก่อนส่งออก');return}const data={...payload(),receipts:await Promise.all(receiptFiles.map(fileAsData))};const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const filename=sessionId+'.json';try{const file=new File([blob],filename,{type:'application/json'});if(navigator.canShare&&navigator.canShare({files:[file]})&&navigator.share){await navigator.share({files:[file],title:'ชุดข้อมูลรอบซื้อ'});$('status').textContent='เปิดเมนูแชร์แล้ว · เลือก Drive หรือบันทึกลง Files เพื่อส่งให้กรุงเทพฯ';return}}catch(err){if(err&&err.name==='AbortError'){$('status').textContent='ยกเลิกการแชร์';return}}const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(url),1500);$('status').textContent='ดาวน์โหลดไฟล์รอบซื้อแล้ว · เปิดเมนูแชร์ของ iPhone หรือแอป Files แล้วอัปโหลดไปยังโฟลเดอร์ Google Drive ของร้าน'};
 let scanControls=null, scanning=false;
+function stopScanner(){
+  try{scanControls?.stop()}catch(e){}
+  scanControls=null;scanning=false;
+  $('scanner').srcObject=null;$('scanner').style.display='none';
+  $('scanBtn').textContent='เปิดกล้อง';
+}
+function cameraErrorMessage(error){
+  const name=error?.name||'';
+  if(name==='NotAllowedError'||name==='PermissionDeniedError')
+    return 'Safari ไม่ได้รับอนุญาตให้ใช้กล้อง: อนุญาต Camera ให้เว็บไซต์นี้ในการตั้งค่า Safari แล้วลองใหม่';
+  if(name==='NotFoundError'||name==='DevicesNotFoundError')
+    return 'ไม่พบกล้องบนอุปกรณ์นี้';
+  if(name==='NotReadableError'||name==='TrackStartError')
+    return 'เปิดกล้องไม่ได้เพราะกล้องกำลังถูกใช้งานโดยแอปอื่น ปิดแอปกล้อง/แอปสแกนแล้วลองใหม่';
+  if(name==='OverconstrainedError')
+    return 'กล้องหลังไม่รองรับการตั้งค่าที่ขอ ลองปิดและเปิดกล้องอีกครั้ง';
+  if(name==='SecurityError'||!window.isSecureContext)
+    return 'เบราว์เซอร์บล็อกกล้อง: เปิดหน้าเว็บผ่าน HTTPS ใน Safari';
+  if(name==='TypeError')
+    return 'Safari นี้ไม่รองรับ Camera API หรือยังไม่ได้เปิดผ่าน HTTPS';
+  return 'เปิดกล้องไม่สำเร็จ'+(name?' ('+name+')':'')+': '+(error?.message||'ตรวจสิทธิ์กล้องและลองใหม่');
+}
 $('scanBtn').onclick=async()=>{
   if(scanning){
-    try{scanControls?.stop()}catch(e){}
-    scanControls=null;scanning=false;
-    $('scanner').srcObject=null;$('scanner').style.display='none';
-    $('scanBtn').textContent='เปิดกล้อง';
+    stopScanner();
     $('scanStatus').textContent='ปิดกล้องแล้ว';
     return;
   }
-  if(!window.ZXing || !ZXing.BrowserMultiFormatReader){
-    $('scanStatus').textContent='โหลดตัวอ่านบาร์โค้ดไม่สำเร็จ (ต้องเชื่อมอินเทอร์เน็ต) — พิมพ์บาร์โค้ดเองได้';
+  if(!window.isSecureContext){
+    $('scanStatus').textContent='ต้องเปิดเว็บไซต์ผ่าน HTTPS เพื่อใช้กล้อง — พิมพ์บาร์โค้ดเองได้';
+    return;
+  }
+  if(!navigator.mediaDevices?.getUserMedia){
+    $('scanStatus').textContent='Safari ไม่มี Camera API ที่จำเป็น อัปเดต iOS แล้วเปิดลิงก์ใน Safari — พิมพ์บาร์โค้ดเองได้';
+    return;
+  }
+  const ZXingBrowser=window.ZXingBrowser;
+  if(!ZXingBrowser?.BrowserMultiFormatReader){
+    const script=$('zxingLibrary');
+    const detail=script?.dataset.failed?'โหลด ZXing จากทั้ง unpkg และ jsDelivr ไม่สำเร็จ (ตรวจอินเทอร์เน็ตหรือ content blocker)':'ไม่พบ ZXingBrowser หลังโหลดไลบรารี';
+    $('scanStatus').textContent=detail+' — พิมพ์บาร์โค้ดเองได้';
     return;
   }
   try{
-    const reader=new ZXing.BrowserMultiFormatReader();
+    const reader=new ZXingBrowser.BrowserMultiFormatReader();
     $('scanner').style.display='block';
     $('scanBtn').textContent='กำลังเปิดกล้อง…';
-    $('scanStatus').textContent='กำลังขอสิทธิ์กล้อง โปรดกด Allow หาก Safari ถาม';
-    scanControls=await reader.decodeFromVideoDevice(undefined,$('scanner'),(result,err,controls)=>{
-      if(result){
-        $('barcode').value=result.getText();
-        $('scanStatus').textContent='อ่านบาร์โค้ดแล้ว: '+result.getText();
-        try{controls.stop()}catch(e){}
-        scanControls=null;scanning=false;
-        $('scanner').srcObject=null;$('scanner').style.display='none';
-        $('scanBtn').textContent='เปิดกล้อง';
+    $('scanStatus').textContent='กำลังขอสิทธิ์กล้อง โปรดอนุญาตใน Safari';
+    scanControls=await reader.decodeFromConstraints(
+      {audio:false,video:{facingMode:{ideal:'environment'}}},
+      $('scanner'),
+      (result,err,controls)=>{
+        if(result){
+          $('barcode').value=result.getText();
+          $('scanStatus').textContent='อ่านบาร์โค้ดแล้ว: '+result.getText();
+          try{controls.stop()}catch(e){}
+          stopScanner();
+        }
       }
-    });
+    );
     scanning=true;
     $('scanBtn').textContent='ปิดกล้อง';
-    $('scanStatus').textContent='เล็งกล้องให้บาร์โค้ดอยู่ในกรอบภาพ';
+    $('scanStatus').textContent='เล็งกล้องหลังให้บาร์โค้ดอยู่ในกรอบภาพ';
   }catch(e){
-    scanControls=null;scanning=false;
-    $('scanner').style.display='none';$('scanBtn').textContent='เปิดกล้อง';
-    $('scanStatus').textContent='เปิดกล้องไม่สำเร็จ: '+(e?.message||'ตรวจสิทธิ์กล้อง และเปิดผ่าน HTTPS ใน Safari');
+    stopScanner();
+    $('scanStatus').textContent=cameraErrorMessage(e)+' — คุณยังพิมพ์บาร์โค้ดเองได้';
   }
 }
 </script>
